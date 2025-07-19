@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# Property Heatmap
 
-## Project info
+Interactive property heatmap application with Google Maps integration for real estate analysis.
 
-**URL**: https://lovable.dev/projects/fe70ace5-2497-43d3-aff2-3caeeb354c7d
+## Features
 
-## How can I edit this code?
+- 🗺️ Interactive Google Maps integration
+- 📍 Add property markers with pricing data
+- 🏠 Property database with Supabase backend
+- 📱 Responsive design with shadcn/ui components
+- 🔄 Real-time property visualization
 
-There are several ways of editing your application.
+## Technologies
 
-**Use Lovable**
+- **Frontend**: React + TypeScript + Vite
+- **Maps**: Google Maps JavaScript API
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Deployment**: Vercel with automatic GitHub deployments
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fe70ace5-2497-43d3-aff2-3caeeb354c7d) and start prompting.
+## Development
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js & npm
+- Google Maps API key
+- Supabase account
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/tradewithmeai/property-heatmap.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to project directory
+cd property-heatmap
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The app requires the following environment variables:
 
-**Use GitHub Codespaces**
+- `VITE_GOOGLE_MAPS_API_KEY` - Google Maps JavaScript API key
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Deployment
 
-## What technologies are used for this project?
+The app is configured for automatic deployment to Vercel:
 
-This project is built with:
+1. Push changes to the `master` branch
+2. Vercel automatically builds and deploys
+3. Environment variables are configured in Vercel dashboard
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Usage
 
-## How can I deploy this project?
+1. **View Properties**: The map displays existing property markers
+2. **Add Properties**: Click "Add Properties" then click on the map to place new markers
+3. **Property Details**: Click markers to view property information
+4. **Database Testing**: Use "Test DB" button to verify database connectivity
 
-Simply open [Lovable](https://lovable.dev/projects/fe70ace5-2497-43d3-aff2-3caeeb354c7d) and click on Share -> Publish.
+## License
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Private project - All rights reserved

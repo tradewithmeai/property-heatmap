@@ -14,7 +14,11 @@
       "Bash(git remote add:*)",
       "Bash(git push:*)",
       "Bash(supabase status:*)",
-      "Bash(./supabase-cli.exe status)"
+      "Bash(./supabase-cli.exe status)",
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(./supabase-cli.exe --version)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
