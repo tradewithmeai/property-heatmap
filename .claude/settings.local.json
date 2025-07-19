@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(gh auth:*)",
+      "Bash(vercel:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
