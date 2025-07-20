@@ -211,6 +211,9 @@ function MapWithLoader({ apiKey }: MapWithLoaderProps) {
 export function PropertyMap() {
   const { apiKey, loading: keyLoading, error: keyError } = useGoogleMapsKey();
 
+  // Debug logging
+  console.log('PropertyMap debug:', { apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'null', keyLoading, keyError });
+
   if (keyLoading) {
     return <div className="flex justify-center items-center h-96">Waiting for API key...</div>;
   }
@@ -220,6 +223,9 @@ export function PropertyMap() {
       <div className="flex flex-col justify-center items-center h-96 p-4">
         <p className="text-red-500 font-semibold mb-2">API Key Error:</p>
         <p className="text-sm text-muted-foreground text-center">{keyError}</p>
+        <div className="mt-4 text-xs text-gray-500">
+          Debug: Check browser console for more details
+        </div>
       </div>
     );
   }

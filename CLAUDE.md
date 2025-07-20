@@ -32,7 +32,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 - **Edge Function**: `get-maps-key` deployed and functional
 
 ### Google Maps API
-- **API Key**: AIzaSyBtEYcrvcrOB_ydUlGhqQgK9xE3pWdYCm8
+- **API Key**: Stored securely in Supabase Edge Function environment
 - **Integration**: Via Supabase Edge Function for security
 - **Fallback**: Environment variable VITE_GOOGLE_MAPS_API_KEY
 
@@ -97,7 +97,12 @@ npx supabase projects list             # List projects
 
 ## Recent Major Changes
 
-### ✅ Complete Rebranding (Latest)
+### ✅ Security Fix (Latest)
+- Removed exposed Google Maps API key from documentation
+- API key now properly secured in Supabase Edge Function only
+- Updated documentation to reflect secure API key storage
+
+### ✅ Complete Rebranding
 - Removed all Lovable references from codebase
 - Updated page title to "Property Heatmap"
 - Created custom favicon with map marker design
@@ -155,3 +160,4 @@ npx supabase projects list             # List projects
 ---
 *Last Updated: 2025-07-19*
 *Status: Production Ready - Fully Functional*
+*Security: API Keys Properly Secured*

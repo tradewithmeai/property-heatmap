@@ -11,6 +11,11 @@ export function useGoogleMapsKey() {
       try {
         // Try to get API key from environment variable first
         const envApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        console.log('Environment API key check:', { 
+          hasEnvKey: !!envApiKey, 
+          envKeyPrefix: envApiKey ? envApiKey.substring(0, 10) : 'none' 
+        });
+        
         if (envApiKey) {
           setApiKey(envApiKey);
           setLoading(false);
@@ -18,7 +23,10 @@ export function useGoogleMapsKey() {
         }
 
         // Fallback to Supabase function
+        console.log('Attempting Supabase function fallback...');
         const { data, error } = await supabase.functions.invoke('get-maps-key');
+        
+        console.log('Supabase function response:', { data, error });
         
         if (error) throw error;
         
@@ -28,6 +36,7 @@ export function useGoogleMapsKey() {
           throw new Error('No API key available. Please set VITE_GOOGLE_MAPS_API_KEY environment variable or configure the Supabase edge function.');
         }
       } catch (err) {
+        console.error('API key fetch error:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch API key');
       } finally {
         setLoading(false);

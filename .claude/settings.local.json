@@ -18,7 +18,10 @@
       "Bash(npm install:*)",
       "Bash(winget install:*)",
       "Bash(./supabase-cli.exe --version)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:cogxunjrdqsuvlgbmokf.supabase.co)",
+      "WebFetch(domain:property-heatmap-4a5u77jka-captains-projects-493e7ead.vercel.app)",
+      "WebFetch(domain:property-heatmap-5khurfi3r-captains-projects-493e7ead.vercel.app)"
     ],
     "deny": []
   }
