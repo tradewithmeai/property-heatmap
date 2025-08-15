@@ -134,9 +134,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
                 // Prevent automatic adjustments
                 disableDoubleClickZoom: false, // Keep for manual use
                 scrollwheel: true, // Keep for manual use
-                // Set explicit zoom constraints
-                minZoom: Math.max(mapInstance.getZoom() - 3, 8), // Allow some zoom out
-                maxZoom: 20, // Allow zoom in
+                // Set explicit zoom constraints - allow reasonable zoom range
+                minZoom: Math.max(mapInstance.getZoom() - 5, 5), // Allow significant zoom out
+                maxZoom: 22, // Allow detailed zoom in
                 // Prevent automatic map type changes
                 mapTypeControl: false,
                 streetViewControl: false,
@@ -265,21 +265,27 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const handleZoomIn = useCallback(() => {
     if (mapInstance) {
       const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
-      const maxZoom = 20; // Always allow zoom in to detail level
-      mapInstance.setZoom(Math.min(currentZoom + 1, maxZoom));
-      setCurrentZoom(Math.min(currentZoom + 1, maxZoom));
+      const maxZoom = 22; // Allow detailed zoom in
+      
+      const newZoom = Math.min(currentZoom + 1, maxZoom);
+      mapInstance.setZoom(newZoom);
+      setCurrentZoom(newZoom);
+      
+      console.log(`Zoom in: ${currentZoom} -> ${newZoom}, maxZoom: ${maxZoom}`);
     }
   }, [mapInstance]);
 
   const handleZoomOut = useCallback(() => {
     if (mapInstance) {
       const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
-      // Use dynamic minZoom if available, otherwise fallback to boundary-based logic
-      const mapOptions = mapInstance.get('minZoom');
-      const minZoom = mapOptions || (boundedArea ? 8 : 3);
+      // Be more permissive with zoom out when boundary is set
+      const minZoom = boundedArea ? 5 : 3; // Allow significant zoom out within boundary
       
-      mapInstance.setZoom(Math.max(currentZoom - 1, minZoom));
-      setCurrentZoom(Math.max(currentZoom - 1, minZoom));
+      const newZoom = Math.max(currentZoom - 1, minZoom);
+      mapInstance.setZoom(newZoom);
+      setCurrentZoom(newZoom);
+      
+      console.log(`Zoom out: ${currentZoom} -> ${newZoom}, minZoom: ${minZoom}`);
     }
   }, [mapInstance, boundedArea]);
 
@@ -354,9 +360,14 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
               new google.maps.LatLng(boundedArea.south, boundedArea.west),
               new google.maps.LatLng(boundedArea.north, boundedArea.east)
             ),
-            strictBounds: true,
+            strictBounds: false, // Allow some movement outside bounds for zoom changes
           };
-          mapInstance.setOptions({ restriction });
+          mapInstance.setOptions({ 
+            restriction,
+            // Ensure zoom controls still work within restriction
+            minZoom: 5,
+            maxZoom: 22
+          });
         }
       }, 1000); // Allow time for fitBounds to complete
     }
