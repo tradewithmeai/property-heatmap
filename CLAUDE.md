@@ -1,13 +1,32 @@
-# Property Heatmap - Claude Project Memory
+# Field Navigator - Claude Project Memory
 
 ## Project Overview
-Interactive property heatmap application with Google Maps integration for real estate analysis. Built with React, TypeScript, and Supabase.
+Mobile field navigation app with user-defined map boundaries for outdoor use. Transformed from property heatmap to mobile-first field tool. Built with React, TypeScript, and Supabase.
 
-## Project Status: ✅ PRODUCTION READY - FULLY WORKING
+## Project Status: ✅ FIELD NAVIGATOR - PHASE 1 COMPLETE
 - **GitHub Repository**: https://github.com/tradewithmeai/property-heatmap
 - **Live Production URL**: https://property-heatmap.vercel.app
 - **Team Production URL**: https://property-heatmap-captains-projects-493e7ead.vercel.app
-- **Local Development**: http://localhost:8081 (auto-detects available port)
+- **Local Development**: http://localhost:8080 (auto-detects available port)
+
+## 🔄 Version Control & Backups
+### Original Property Map Backup
+The original property heatmap application has been preserved for future rollback:
+- **Backup Branch**: `property-map-backup` 
+- **Backup Tag**: `v1.0-property-map`
+- **GitHub Backup**: https://github.com/tradewithmeai/property-heatmap/tree/property-map-backup
+
+### Rollback Commands
+```bash
+# Switch to original property map
+git checkout property-map-backup
+
+# Or checkout tagged version
+git checkout v1.0-property-map
+
+# Return to field navigator
+git checkout master
+```
 
 ## Technology Stack
 - **Frontend**: React 18.3.1 + TypeScript + Vite 5.4.10
