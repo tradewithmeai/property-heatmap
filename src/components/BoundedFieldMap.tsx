@@ -426,24 +426,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             maxZoom: 20,
           }}
         >
-          {/* Show saved boundary rectangle */}
-          {boundedArea && (
-            <Rectangle
-              bounds={{
-                north: boundedArea.north,
-                south: boundedArea.south,
-                east: boundedArea.east,
-                west: boundedArea.west,
-              }}
-              options={{
-                strokeColor: '#4CAF50',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: '#4CAF50',
-                fillOpacity: 0.1,
-              }}
-            />
-          )}
+          {/* Boundary rectangle removed for cleaner view */}
         </GoogleMap>
         
         {/* Custom Zoom Controls - Always show for easy access */}
