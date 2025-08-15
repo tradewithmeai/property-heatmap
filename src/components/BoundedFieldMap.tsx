@@ -204,10 +204,11 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const handleZoomOut = useCallback(() => {
     if (mapInstance) {
       const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
-      mapInstance.setZoom(Math.max(currentZoom - 1, 10));
-      setCurrentZoom(Math.max(currentZoom - 1, 10));
+      const minZoom = boundedArea ? 10 : 3; // Different limits based on boundary state
+      mapInstance.setZoom(Math.max(currentZoom - 1, minZoom));
+      setCurrentZoom(Math.max(currentZoom - 1, minZoom));
     }
-  }, [mapInstance]);
+  }, [mapInstance, boundedArea]);
 
   const handleResetView = useCallback(() => {
     if (mapInstance && savedView) {
@@ -252,7 +253,20 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         ),
         strictBounds: true,
       };
-      map.setOptions({ restriction });
+      map.setOptions({ 
+        restriction,
+        // Enable rotation when boundaries are set
+        rotateControl: false, // Still use gestures
+        minZoom: 10,
+        maxZoom: 20
+      });
+    } else {
+      // Remove restrictions and disable rotation when no boundaries
+      map.setOptions({ 
+        restriction: null,
+        minZoom: 3,
+        maxZoom: 20
+      });
     }
   }, [boundedArea]);
 
@@ -298,25 +312,28 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           mapContainerStyle={containerStyle}
           center={savedView?.center || defaultCenter}
           zoom={savedView?.zoom || DEFAULT_ZOOM}
-          heading={savedView?.heading || 0}
+          heading={boundedArea ? (savedView?.heading || 0) : 0}
           onLoad={handleMapLoad}
           options={{
             // Mobile-optimized options
             disableDefaultUI: true,
-            gestureHandling: 'greedy', // Allow all gestures
+            gestureHandling: 'greedy', // Always allow all gestures
             zoomControl: false, // We'll use custom controls
-            // Enable rotation
+            // Rotation settings based on boundary state
             rotateControl: false, // We'll handle this with gestures
             tilt: 0,
             // Disable street view and other desktop features
             streetViewControl: false,
             fullscreenControl: false,
             mapTypeControl: false,
-            // Enable gestures when boundary is set
-            scrollwheel: boundedArea ? true : false,
+            // Always enable zoom and pan gestures
+            scrollwheel: true,
             disableDoubleClickZoom: false,
-            // Allow rotation with touch
-            gestureHandling: boundedArea ? 'greedy' : 'cooperative',
+            // Allow rotation only when boundary is set
+            rotateControlOptions: boundedArea ? undefined : { position: -1 }, // Disable rotation before boundary
+            // Zoom limits (wider range before boundary)
+            minZoom: boundedArea ? 10 : 3,
+            maxZoom: 20,
           }}
         >
           {/* Show saved boundary rectangle */}
@@ -339,29 +356,27 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           )}
         </GoogleMap>
         
-        {/* Custom Zoom Controls - Only show when boundaries are set */}
-        {boundedArea && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-            <Button
-              onClick={handleZoomIn}
-              size="icon"
-              variant="secondary"
-              className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
-              aria-label="Zoom in"
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-            <Button
-              onClick={handleZoomOut}
-              size="icon"
-              variant="secondary"
-              className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
-              aria-label="Zoom out"
-            >
-              <Minus className="h-6 w-6" />
-            </Button>
-          </div>
-        )}
+        {/* Custom Zoom Controls - Always show for easy access */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+          <Button
+            onClick={handleZoomIn}
+            size="icon"
+            variant="secondary"
+            className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
+            aria-label="Zoom in"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+          <Button
+            onClick={handleZoomOut}
+            size="icon"
+            variant="secondary"
+            className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
+            aria-label="Zoom out"
+          >
+            <Minus className="h-6 w-6" />
+          </Button>
+        </div>
         
         {/* Reset View Button - Only show when boundaries are set */}
         {boundedArea && (
