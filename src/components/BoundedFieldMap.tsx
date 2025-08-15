@@ -120,14 +120,27 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           setBoundedArea(newBounds);
           localStorage.setItem('fieldMapBounds', JSON.stringify(newBounds));
           
-          // Auto-fit to boundaries with padding
+          // Auto-fit to boundaries with generous padding for better visibility
           mapInstance.fitBounds(bounds, { 
-            padding: { top: 50, right: 50, bottom: 50, left: 50 }
+            padding: { top: 80, right: 80, bottom: 120, left: 80 } // Extra bottom padding for controls
           });
           
-          // Save the fitted view after a short delay (to let fitBounds complete)
+          // Prevent Google Maps auto-adjustments and save the fitted view
           setTimeout(() => {
             if (mapInstance) {
+              // Apply settings to prevent auto-adjustments
+              mapInstance.setOptions({
+                // Prevent automatic adjustments
+                disableDoubleClickZoom: false, // Keep for manual use
+                scrollwheel: true, // Keep for manual use
+                // Set explicit zoom constraints
+                minZoom: Math.max(mapInstance.getZoom() - 3, 8), // Allow some zoom out
+                maxZoom: 20, // Allow zoom in
+                // Prevent automatic map type changes
+                mapTypeControl: false,
+                streetViewControl: false,
+              });
+              
               const center = mapInstance.getCenter();
               const zoom = mapInstance.getZoom();
               if (center && zoom) {
@@ -140,7 +153,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
                 localStorage.setItem('fieldMapSavedView', JSON.stringify(view));
               }
             }
-          }, 500);
+          }, 800); // Longer delay to ensure fitBounds completes
           
           toast({
             title: "Area Defined",
@@ -196,15 +209,19 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const handleZoomIn = useCallback(() => {
     if (mapInstance) {
       const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
-      mapInstance.setZoom(Math.min(currentZoom + 1, 20));
-      setCurrentZoom(Math.min(currentZoom + 1, 20));
+      const maxZoom = 20; // Always allow zoom in to detail level
+      mapInstance.setZoom(Math.min(currentZoom + 1, maxZoom));
+      setCurrentZoom(Math.min(currentZoom + 1, maxZoom));
     }
   }, [mapInstance]);
 
   const handleZoomOut = useCallback(() => {
     if (mapInstance) {
       const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
-      const minZoom = boundedArea ? 10 : 3; // Different limits based on boundary state
+      // Use dynamic minZoom if available, otherwise fallback to boundary-based logic
+      const mapOptions = mapInstance.get('minZoom');
+      const minZoom = mapOptions || (boundedArea ? 8 : 3);
+      
       mapInstance.setZoom(Math.max(currentZoom - 1, minZoom));
       setCurrentZoom(Math.max(currentZoom - 1, minZoom));
     }
@@ -270,24 +287,20 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     }
   }, [boundedArea]);
 
-  // Apply restriction when boundedArea changes
+  // Apply restriction when boundedArea changes (but don't auto-fit here)
   useEffect(() => {
     if (mapInstance && boundedArea) {
-      const restriction = {
-        latLngBounds: new google.maps.LatLngBounds(
-          new google.maps.LatLng(boundedArea.south, boundedArea.west),
-          new google.maps.LatLng(boundedArea.north, boundedArea.east)
-        ),
-        strictBounds: true,
-      };
-      mapInstance.setOptions({ restriction });
-      
-      // Fit map to bounded area
-      const bounds = new google.maps.LatLngBounds(
-        new google.maps.LatLng(boundedArea.south, boundedArea.west),
-        new google.maps.LatLng(boundedArea.north, boundedArea.east)
-      );
-      mapInstance.fitBounds(bounds);
+      // Apply restrictions with a delay to allow initial fitBounds to complete
+      setTimeout(() => {
+        const restriction = {
+          latLngBounds: new google.maps.LatLngBounds(
+            new google.maps.LatLng(boundedArea.south, boundedArea.west),
+            new google.maps.LatLng(boundedArea.north, boundedArea.east)
+          ),
+          strictBounds: true,
+        };
+        mapInstance.setOptions({ restriction });
+      }, 1000); // Allow time for fitBounds to complete
     }
   }, [mapInstance, boundedArea]);
 
@@ -329,10 +342,11 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             // Always enable zoom and pan gestures
             scrollwheel: true,
             disableDoubleClickZoom: false,
-            // Allow rotation only when boundary is set
-            rotateControlOptions: boundedArea ? undefined : { position: -1 }, // Disable rotation before boundary
+            // Prevent automatic behavior
+            keyboardShortcuts: false, // Prevent accidental keyboard zoom
+            backgroundColor: '#f5f5f5', // Consistent background
             // Zoom limits (wider range before boundary)
-            minZoom: boundedArea ? 10 : 3,
+            minZoom: boundedArea ? 8 : 3,
             maxZoom: 20,
           }}
         >
