@@ -21,7 +21,9 @@
       "Bash(curl:*)",
       "WebFetch(domain:cogxunjrdqsuvlgbmokf.supabase.co)",
       "WebFetch(domain:property-heatmap-4a5u77jka-captains-projects-493e7ead.vercel.app)",
-      "WebFetch(domain:property-heatmap-5khurfi3r-captains-projects-493e7ead.vercel.app)"
+      "WebFetch(domain:property-heatmap-5khurfi3r-captains-projects-493e7ead.vercel.app)",
+      "Bash(gcloud:*)",
+      "Bash(where gcloud)"
     ],
     "deny": []
   }

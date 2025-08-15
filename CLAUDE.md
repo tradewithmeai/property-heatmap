@@ -3,10 +3,11 @@
 ## Project Overview
 Interactive property heatmap application with Google Maps integration for real estate analysis. Built with React, TypeScript, and Supabase.
 
-## Project Status: ✅ PRODUCTION READY
+## Project Status: ✅ PRODUCTION READY - FULLY WORKING
 - **GitHub Repository**: https://github.com/tradewithmeai/property-heatmap
-- **Live Production URL**: https://property-heatmap-dtfhcq1kb-captains-projects-493e7ead.vercel.app
-- **Local Development**: http://localhost:8084 (auto-detects available port)
+- **Live Production URL**: https://property-heatmap.vercel.app
+- **Team Production URL**: https://property-heatmap-captains-projects-493e7ead.vercel.app
+- **Local Development**: http://localhost:8081 (auto-detects available port)
 
 ## Technology Stack
 - **Frontend**: React 18.3.1 + TypeScript + Vite 5.4.10
@@ -22,6 +23,7 @@ Interactive property heatmap application with Google Maps integration for real e
 ```
 VITE_SUPABASE_URL=https://cogxunjrdqsuvlgbmokf.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZ3h1bmpyZHFzdXZsZ2Jtb2tmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzQ4MzUsImV4cCI6MjA2NjQ1MDgzNX0.bV7nN60sA8MDut1iZ5Ede0jBJGfLwkJkp5Rw-Dqlmd0
+VITE_GOOGLE_MAPS_API_KEY=[Encrypted] (Maps JavaScript API enabled)
 ```
 
 ### Supabase Configuration
@@ -32,9 +34,11 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 - **Edge Function**: `get-maps-key` deployed and functional
 
 ### Google Maps API
-- **API Key**: Stored securely in Supabase Edge Function environment
-- **Integration**: Via Supabase Edge Function for security
-- **Fallback**: Environment variable VITE_GOOGLE_MAPS_API_KEY
+- **Google Cloud Project**: ornate-glider-465920-q1
+- **API Key**: Dual storage - Vercel environment variable (primary) + Supabase Edge Function (fallback)
+- **APIs Enabled**: Maps JavaScript API, Maps Backend API
+- **Integration**: Direct via environment variable with Supabase fallback
+- **Status**: ✅ FULLY FUNCTIONAL
 
 ## Development Workflow
 
@@ -97,10 +101,19 @@ npx supabase projects list             # List projects
 
 ## Recent Major Changes
 
-### ✅ Security Fix (Latest)
-- Removed exposed Google Maps API key from documentation
-- API key now properly secured in Supabase Edge Function only
-- Updated documentation to reflect secure API key storage
+### ✅ Google Maps Integration Fixed (Latest - 2025-07-20)
+- ✅ Resolved Google Maps "ApiNotActivatedMapError" 
+- ✅ Enabled Maps JavaScript API in Google Cloud Console (ornate-glider-465920-q1)
+- ✅ Added VITE_GOOGLE_MAPS_API_KEY to Vercel environment variables
+- ✅ Implemented dual API key strategy (Vercel primary, Supabase fallback)
+- ✅ Added debug logging for API key loading troubleshooting
+- ✅ Verified full functionality: map loads, markers work, prices generate
+- ✅ Installed Google Cloud CLI for future API management
+
+### ✅ Security & Configuration
+- API key properly secured across multiple storage locations
+- Supabase Edge Function remains as reliable fallback
+- Updated production aliases and deployment URLs
 
 ### ✅ Complete Rebranding
 - Removed all Lovable references from codebase
@@ -124,11 +137,14 @@ npx supabase projects list             # List projects
 
 ## Known Issues & Solutions
 
-### Issue: API Key Errors
-**Solution**: API keys are managed via Supabase Edge Function. If issues occur:
-1. Check Supabase Edge Function deployment
-2. Verify `GOOGLE_MAPS_API_KEY` in Supabase secrets
-3. Ensure Vercel environment variables are set
+### ✅ RESOLVED: Google Maps API Issues  
+**Previous Issue**: "This page didn't load Google Maps correctly" error
+**Root Cause**: Maps JavaScript API not enabled in Google Cloud Console
+**Solution Applied**: 
+1. Enabled Maps JavaScript API in Google Cloud Console (ornate-glider-465920-q1)
+2. Added VITE_GOOGLE_MAPS_API_KEY to Vercel environment variables
+3. Implemented dual fallback system (Vercel → Supabase Edge Function)
+**Status**: ✅ FULLY RESOLVED
 
 ### Issue: Supabase Connection
 **Solution**: App uses production Supabase instance. Local development connects to production database.
@@ -145,8 +161,9 @@ npx supabase projects list             # List projects
 
 ## CLI Tools Configuration
 - **GitHub CLI**: Authenticated as tradewithmeai
-- **Vercel CLI**: Authenticated as devsolvx-2686
+- **Vercel CLI**: Authenticated as devsolvx-2686  
 - **Supabase CLI**: Authenticated with access token
+- **Google Cloud CLI**: Authenticated as richwatson420@gmail.com, project: ornate-glider-465920-q1
 - **Git**: Repository linked to GitHub with auto-deploy
 
 ## Next Development Steps
@@ -157,7 +174,15 @@ npx supabase projects list             # List projects
 5. Enhance map visualization with heatmap overlay
 6. Add property analytics and reporting
 
+## Current Features Working
+- ✅ **Google Maps Integration**: Full interactive map with London center view
+- ✅ **Property Markers**: Click "Add Properties" → click map to place markers  
+- ✅ **Demo Pricing**: Random property prices (£200K - £1.2M) generated on click
+- ✅ **Toast Notifications**: Success messages when properties added
+- ✅ **Responsive UI**: Clean interface with shadcn/ui components
+- ✅ **Database Ready**: Supabase backend configured for future property storage
+
 ---
-*Last Updated: 2025-07-19*
-*Status: Production Ready - Fully Functional*
-*Security: API Keys Properly Secured*
+*Last Updated: 2025-07-20*  
+*Status: Production Ready - Fully Functional - Google Maps Working*  
+*Security: API Keys Properly Secured Across Multiple Systems*
