@@ -91,8 +91,8 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           strokeWeight: 2,
           fillColor: '#FF0000',
           fillOpacity: 0.15,
-          editable: true,
-          draggable: true,
+          editable: false,  // Prevent editing after drawing
+          draggable: false, // Prevent dragging after drawing
         },
       });
 
@@ -106,7 +106,12 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           currentRectangle.setMap(null);
         }
         
-        setCurrentRectangle(rectangle);
+        // Hide the red drawing rectangle immediately after getting bounds
+        setTimeout(() => {
+          rectangle.setMap(null);
+        }, 100);
+        
+        setCurrentRectangle(null); // Don't store the red rectangle
         
         // Get bounds and save
         const bounds = rectangle.getBounds();
@@ -202,6 +207,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     setSavedView(null);
     setCurrentZoom(DEFAULT_ZOOM);
     
+    // Clear any drawing rectangles (shouldn't be any but just in case)
     if (currentRectangle) {
       currentRectangle.setMap(null);
       setCurrentRectangle(null);
@@ -360,13 +366,16 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
               new google.maps.LatLng(boundedArea.south, boundedArea.west),
               new google.maps.LatLng(boundedArea.north, boundedArea.east)
             ),
-            strictBounds: false, // Allow some movement outside bounds for zoom changes
+            strictBounds: true, // Properly constrain to boundary
           };
           mapInstance.setOptions({ 
             restriction,
             // Ensure zoom controls still work within restriction
             minZoom: 5,
-            maxZoom: 22
+            maxZoom: 22,
+            // Allow zoom gestures within bounds
+            scrollwheel: true,
+            disableDoubleClickZoom: false,
           });
         }
       }, 1000); // Allow time for fitBounds to complete
@@ -426,7 +435,27 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             maxZoom: 20,
           }}
         >
-          {/* Boundary rectangle removed for cleaner view */}
+          {/* Show green boundary rectangle when area is defined */}
+          {boundedArea && (
+            <Rectangle
+              bounds={{
+                north: boundedArea.north,
+                south: boundedArea.south,
+                east: boundedArea.east,
+                west: boundedArea.west,
+              }}
+              options={{
+                strokeColor: '#4CAF50',
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                fillColor: '#4CAF50',
+                fillOpacity: 0.05,
+                editable: false,
+                draggable: false,
+                clickable: false,
+              }}
+            />
+          )}
         </GoogleMap>
         
         {/* Custom Zoom Controls - Always show for easy access */}
