@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
+import { Plus, Minus, RotateCw, Maximize2 } from 'lucide-react';
 
 const containerStyle = {
   width: '100%',
@@ -27,6 +28,12 @@ interface BoundedArea {
   west: number;
 }
 
+interface SavedView {
+  center: google.maps.LatLngLiteral;
+  zoom: number;
+  heading: number;
+}
+
 interface BoundedFieldMapProps {
   apiKey: string;
 }
@@ -37,6 +44,8 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const [drawingManager, setDrawingManager] = useState<google.maps.drawing.DrawingManager | null>(null);
   const [currentRectangle, setCurrentRectangle] = useState<google.maps.Rectangle | null>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const [savedView, setSavedView] = useState<SavedView | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM);
   const { toast } = useToast();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -45,15 +54,26 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     libraries: ['drawing']
   });
 
-  // Load saved boundaries from localStorage
+  // Load saved boundaries and view from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('fieldMapBounds');
-    if (saved) {
+    const savedBounds = localStorage.getItem('fieldMapBounds');
+    const savedViewData = localStorage.getItem('fieldMapSavedView');
+    
+    if (savedBounds) {
       try {
-        const bounds = JSON.parse(saved);
+        const bounds = JSON.parse(savedBounds);
         setBoundedArea(bounds);
       } catch (error) {
         console.error('Failed to load saved bounds:', error);
+      }
+    }
+    
+    if (savedViewData) {
+      try {
+        const view = JSON.parse(savedViewData);
+        setSavedView(view);
+      } catch (error) {
+        console.error('Failed to load saved view:', error);
       }
     }
   }, []);
@@ -89,7 +109,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         
         // Get bounds and save
         const bounds = rectangle.getBounds();
-        if (bounds) {
+        if (bounds && mapInstance) {
           const newBounds = {
             north: bounds.getNorthEast().lat(),
             south: bounds.getSouthWest().lat(),
@@ -100,9 +120,31 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           setBoundedArea(newBounds);
           localStorage.setItem('fieldMapBounds', JSON.stringify(newBounds));
           
+          // Auto-fit to boundaries with padding
+          mapInstance.fitBounds(bounds, { 
+            padding: { top: 50, right: 50, bottom: 50, left: 50 }
+          });
+          
+          // Save the fitted view after a short delay (to let fitBounds complete)
+          setTimeout(() => {
+            if (mapInstance) {
+              const center = mapInstance.getCenter();
+              const zoom = mapInstance.getZoom();
+              if (center && zoom) {
+                const view = {
+                  center: { lat: center.lat(), lng: center.lng() },
+                  zoom: zoom,
+                  heading: mapInstance.getHeading() || 0
+                };
+                setSavedView(view);
+                localStorage.setItem('fieldMapSavedView', JSON.stringify(view));
+              }
+            }
+          }, 500);
+          
           toast({
             title: "Area Defined",
-            description: "Map boundaries have been set and saved."
+            description: "Map auto-fitted to your selected area."
           });
           
           setIsSettingBounds(false);
@@ -127,7 +169,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const handleResetBounds = useCallback(() => {
     setBoundedArea(null);
     setIsSettingBounds(false);
+    setSavedView(null);
     localStorage.removeItem('fieldMapBounds');
+    localStorage.removeItem('fieldMapSavedView');
     
     if (currentRectangle) {
       currentRectangle.setMap(null);
@@ -149,8 +193,55 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     });
   }, [boundedArea, currentRectangle, drawingManager, mapInstance, toast]);
 
+  const handleZoomIn = useCallback(() => {
+    if (mapInstance) {
+      const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
+      mapInstance.setZoom(Math.min(currentZoom + 1, 20));
+      setCurrentZoom(Math.min(currentZoom + 1, 20));
+    }
+  }, [mapInstance]);
+
+  const handleZoomOut = useCallback(() => {
+    if (mapInstance) {
+      const currentZoom = mapInstance.getZoom() || DEFAULT_ZOOM;
+      mapInstance.setZoom(Math.max(currentZoom - 1, 10));
+      setCurrentZoom(Math.max(currentZoom - 1, 10));
+    }
+  }, [mapInstance]);
+
+  const handleResetView = useCallback(() => {
+    if (mapInstance && savedView) {
+      mapInstance.setCenter(savedView.center);
+      mapInstance.setZoom(savedView.zoom);
+      mapInstance.setHeading(savedView.heading);
+      setCurrentZoom(savedView.zoom);
+      
+      toast({
+        title: "View Reset",
+        description: "Returned to original view."
+      });
+    } else if (mapInstance && boundedArea) {
+      // If no saved view, fit to bounds
+      const bounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(boundedArea.south, boundedArea.west),
+        new google.maps.LatLng(boundedArea.north, boundedArea.east)
+      );
+      mapInstance.fitBounds(bounds, { 
+        padding: { top: 50, right: 50, bottom: 50, left: 50 }
+      });
+    }
+  }, [mapInstance, savedView, boundedArea, toast]);
+
   const handleMapLoad = useCallback((map: google.maps.Map) => {
     setMapInstance(map);
+    
+    // Add zoom change listener
+    map.addListener('zoom_changed', () => {
+      const zoom = map.getZoom();
+      if (zoom) {
+        setCurrentZoom(zoom);
+      }
+    });
     
     // Apply restrictions if bounds exist
     if (boundedArea) {
@@ -205,21 +296,27 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       <div className="flex-1 relative">
         <GoogleMap
           mapContainerStyle={containerStyle}
-          center={defaultCenter}
-          zoom={DEFAULT_ZOOM}
+          center={savedView?.center || defaultCenter}
+          zoom={savedView?.zoom || DEFAULT_ZOOM}
+          heading={savedView?.heading || 0}
           onLoad={handleMapLoad}
           options={{
             // Mobile-optimized options
             disableDefaultUI: true,
-            gestureHandling: 'greedy',
-            zoomControl: true,
-            zoomControlOptions: {
-              position: google.maps.ControlPosition.RIGHT_BOTTOM,
-            },
+            gestureHandling: 'greedy', // Allow all gestures
+            zoomControl: false, // We'll use custom controls
+            // Enable rotation
+            rotateControl: false, // We'll handle this with gestures
+            tilt: 0,
             // Disable street view and other desktop features
             streetViewControl: false,
             fullscreenControl: false,
             mapTypeControl: false,
+            // Enable gestures when boundary is set
+            scrollwheel: boundedArea ? true : false,
+            disableDoubleClickZoom: false,
+            // Allow rotation with touch
+            gestureHandling: boundedArea ? 'greedy' : 'cooperative',
           }}
         >
           {/* Show saved boundary rectangle */}
@@ -241,6 +338,46 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             />
           )}
         </GoogleMap>
+        
+        {/* Custom Zoom Controls - Only show when boundaries are set */}
+        {boundedArea && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+            <Button
+              onClick={handleZoomIn}
+              size="icon"
+              variant="secondary"
+              className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
+              aria-label="Zoom in"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
+            <Button
+              onClick={handleZoomOut}
+              size="icon"
+              variant="secondary"
+              className="w-12 h-12 rounded-full shadow-lg bg-white hover:bg-gray-100"
+              aria-label="Zoom out"
+            >
+              <Minus className="h-6 w-6" />
+            </Button>
+          </div>
+        )}
+        
+        {/* Reset View Button - Only show when boundaries are set */}
+        {boundedArea && (
+          <div className="absolute left-4 top-4">
+            <Button
+              onClick={handleResetView}
+              size="sm"
+              variant="secondary"
+              className="shadow-lg bg-white hover:bg-gray-100"
+              aria-label="Reset view"
+            >
+              <Maximize2 className="h-4 w-4 mr-2" />
+              Reset View
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Mobile-friendly controls at bottom */}
