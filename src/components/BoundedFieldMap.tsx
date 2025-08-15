@@ -46,6 +46,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [savedView, setSavedView] = useState<SavedView | null>(null);
   const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM);
+  const restrictionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -180,6 +181,12 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   }, [drawingManager, toast]);
 
   const handleResetBounds = useCallback(() => {
+    // Clear any pending restriction timeouts
+    if (restrictionTimeoutRef.current) {
+      clearTimeout(restrictionTimeoutRef.current);
+      restrictionTimeoutRef.current = null;
+    }
+    
     setBoundedArea(null);
     setIsSettingBounds(false);
     setSavedView(null);
@@ -195,16 +202,28 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       drawingManager.setDrawingMode(null);
     }
 
-    // Remove map restrictions
+    // Fully reset map to initial state
     if (mapInstance) {
-      mapInstance.setOptions({ restriction: null });
+      mapInstance.setOptions({ 
+        restriction: null,
+        // Reset zoom constraints to initial values
+        minZoom: 3,
+        maxZoom: 20,
+        // Reset to default center and zoom
+      });
+      
+      // Return to default view
+      mapInstance.setCenter(defaultCenter);
+      mapInstance.setZoom(DEFAULT_ZOOM);
+      mapInstance.setHeading(0);
+      setCurrentZoom(DEFAULT_ZOOM);
     }
     
     toast({
       title: "Boundaries Reset",
-      description: "Map is now unrestricted."
+      description: "Map returned to initial view."
     });
-  }, [boundedArea, currentRectangle, drawingManager, mapInstance, toast]);
+  }, [currentRectangle, drawingManager, mapInstance, toast]);
 
   const handleZoomIn = useCallback(() => {
     if (mapInstance) {
@@ -291,17 +310,26 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   useEffect(() => {
     if (mapInstance && boundedArea) {
       // Apply restrictions with a delay to allow initial fitBounds to complete
-      setTimeout(() => {
-        const restriction = {
-          latLngBounds: new google.maps.LatLngBounds(
-            new google.maps.LatLng(boundedArea.south, boundedArea.west),
-            new google.maps.LatLng(boundedArea.north, boundedArea.east)
-          ),
-          strictBounds: true,
-        };
-        mapInstance.setOptions({ restriction });
+      restrictionTimeoutRef.current = setTimeout(() => {
+        if (mapInstance && boundedArea) { // Double-check state hasn't changed
+          const restriction = {
+            latLngBounds: new google.maps.LatLngBounds(
+              new google.maps.LatLng(boundedArea.south, boundedArea.west),
+              new google.maps.LatLng(boundedArea.north, boundedArea.east)
+            ),
+            strictBounds: true,
+          };
+          mapInstance.setOptions({ restriction });
+        }
       }, 1000); // Allow time for fitBounds to complete
     }
+    
+    // Cleanup timeout on component unmount or dependency change
+    return () => {
+      if (restrictionTimeoutRef.current) {
+        clearTimeout(restrictionTimeoutRef.current);
+      }
+    };
   }, [mapInstance, boundedArea]);
 
   if (loadError) {
