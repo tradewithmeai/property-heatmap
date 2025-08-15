@@ -181,17 +181,26 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   }, [drawingManager, toast]);
 
   const handleResetBounds = useCallback(() => {
+    // Force complete reset - reload the page if needed
+    const forceReset = () => {
+      window.location.reload();
+    };
+    
     // Clear any pending restriction timeouts
     if (restrictionTimeoutRef.current) {
       clearTimeout(restrictionTimeoutRef.current);
       restrictionTimeoutRef.current = null;
     }
     
+    // Clear all stored data first
+    localStorage.removeItem('fieldMapBounds');
+    localStorage.removeItem('fieldMapSavedView');
+    
+    // Reset component state
     setBoundedArea(null);
     setIsSettingBounds(false);
     setSavedView(null);
-    localStorage.removeItem('fieldMapBounds');
-    localStorage.removeItem('fieldMapSavedView');
+    setCurrentZoom(DEFAULT_ZOOM);
     
     if (currentRectangle) {
       currentRectangle.setMap(null);
@@ -202,26 +211,54 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       drawingManager.setDrawingMode(null);
     }
 
-    // Fully reset map to initial state
+    // Aggressively reset map
     if (mapInstance) {
+      // Remove ALL restrictions and options
       mapInstance.setOptions({ 
         restriction: null,
-        // Reset zoom constraints to initial values
         minZoom: 3,
         maxZoom: 20,
-        // Reset to default center and zoom
+        strictBounds: false,
+        // Force refresh of map behavior
+        gestureHandling: 'greedy',
+        zoomControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        mapTypeControl: false,
+        scrollwheel: true,
+        disableDoubleClickZoom: false,
+        keyboardShortcuts: false,
       });
       
-      // Return to default view
-      mapInstance.setCenter(defaultCenter);
-      mapInstance.setZoom(DEFAULT_ZOOM);
-      mapInstance.setHeading(0);
-      setCurrentZoom(DEFAULT_ZOOM);
+      // Force return to default view
+      setTimeout(() => {
+        if (mapInstance) {
+          mapInstance.setCenter(defaultCenter);
+          mapInstance.setZoom(DEFAULT_ZOOM);
+          mapInstance.setHeading(0);
+        }
+      }, 100);
+      
+      // If still stuck after 2 seconds, force reload
+      setTimeout(() => {
+        const currentCenter = mapInstance.getCenter();
+        const currentZoom = mapInstance.getZoom();
+        
+        // Check if map is still stuck on the old view
+        if (currentCenter && (
+          Math.abs(currentCenter.lat() - defaultCenter.lat) > 0.01 ||
+          Math.abs(currentCenter.lng() - defaultCenter.lng) > 0.01 ||
+          Math.abs((currentZoom || 0) - DEFAULT_ZOOM) > 1
+        )) {
+          console.log('Map stuck, forcing page reload...');
+          forceReset();
+        }
+      }, 2000);
     }
     
     toast({
       title: "Boundaries Reset",
-      description: "Map returned to initial view."
+      description: "Map being reset to initial view..."
     });
   }, [currentRectangle, drawingManager, mapInstance, toast]);
 
