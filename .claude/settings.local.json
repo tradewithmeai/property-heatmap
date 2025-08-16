@@ -26,8 +26,13 @@
       "Bash(where gcloud)",
       "Bash(git branch:*)",
       "Bash(git tag:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm run build:*)",
+      "WebSearch",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(ipconfig)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }
