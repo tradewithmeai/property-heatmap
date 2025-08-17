@@ -38,7 +38,8 @@
       "WebFetch(domain:property-heatmap-9pbypb813-captains-projects-493e7ead.vercel.app)",
       "WebFetch(domain:property-heatmap-7ytztrlb0-captains-projects-493e7ead.vercel.app)",
       "Bash(move:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
