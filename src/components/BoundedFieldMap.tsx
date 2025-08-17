@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, Rectangle, Polygon, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Rectangle, Polygon, Polyline, DirectionsService, DirectionsRenderer, Marker } from '@react-google-maps/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +7,7 @@ import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
 import { Plus, Minus, RotateCw, Maximize2 } from 'lucide-react';
 
 // Static libraries array to prevent LoadScript warning
-const LIBRARIES = ['drawing', 'geometry'] as const;
+const LIBRARIES = ['drawing', 'geometry', 'routes'] as const;
 
 const containerStyle = {
   width: '100%',
@@ -68,6 +68,11 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   // Diagnostic states
   const [renderingType, setRenderingType] = useState<string>('UNKNOWN');
   const [currentTilt, setCurrentTilt] = useState<number>(0);
+  
+  // Directions state
+  const [directionsPoints, setDirectionsPoints] = useState<google.maps.LatLngLiteral[]>([]);
+  const [directionsResult, setDirectionsResult] = useState<google.maps.DirectionsResult | null>(null);
+  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   
   // Legacy state for compatibility (will be phased out)
   const [boundedArea, setBoundedArea] = useState<BoundedArea | null>(null);
@@ -330,6 +335,129 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     return extendedBounds;
   }, []);
 
+  // Calculate route using DirectionsService
+  const calculateRoute = useCallback((points: google.maps.LatLngLiteral[]) => {
+    if (!directionsService || points.length < 2) return;
+    
+    const origin = points[0];
+    const destination = points[points.length - 1];
+    const waypoints = points.slice(1, -1).map(point => ({
+      location: point,
+      stopover: true
+    }));
+    
+    directionsService.route({
+      origin,
+      destination,
+      waypoints,
+      travelMode: google.maps.TravelMode.WALKING,
+      optimizeWaypoints: false
+    }, (result, status) => {
+      if (status === 'OK' && result) {
+        setDirectionsResult(result);
+        console.log(`🗺️ Route calculated: ${points.length} points`);
+      } else {
+        console.error('❌ Route calculation failed:', status);
+      }
+    });
+  }, [directionsService]);
+
+  // Render custom direction markers with labels
+  const renderDirectionsMarkers = useCallback(() => {
+    return directionsPoints.map((point, index) => {
+      const label = String.fromCharCode(65 + index); // A, B, C, D...
+      const isOrigin = index === 0;
+      const isDestination = index === directionsPoints.length - 1;
+      
+      let fillColor = '#FF9800'; // Orange for waypoints
+      if (isOrigin) fillColor = '#4CAF50'; // Green for origin
+      if (isDestination && directionsPoints.length > 1) fillColor = '#F44336'; // Red for destination
+      
+      return (
+        <Marker
+          key={`direction-marker-${index}`}
+          position={point}
+          label={{
+            text: label,
+            color: 'white',
+            fontWeight: 'bold',
+            fontSize: '12px'
+          }}
+          icon={{
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor,
+            fillOpacity: 1,
+            strokeColor: 'white',
+            strokeWeight: 2,
+            scale: 12
+          }}
+          zIndex={1000}
+        />
+      );
+    });
+  }, [directionsPoints]);
+
+  // Floating directions toolbar component
+  const DirectionsToolbar = useCallback(() => {
+    if (directionsPoints.length === 0) return null;
+    
+    return (
+      <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-20">
+        <Button
+          size="sm"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100 text-xs"
+          onClick={() => {
+            setDirectionsPoints([]);
+            setDirectionsResult(null);
+            console.log('🧹 Cleared all direction points');
+            toast({ title: "Directions cleared" });
+          }}
+        >
+          Clear
+        </Button>
+        
+        <Button
+          size="sm"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100 text-xs"
+          onClick={() => {
+            if (directionsPoints.length === 0) return;
+            
+            const newPoints = directionsPoints.slice(0, -1);
+            setDirectionsPoints(newPoints);
+            
+            if (newPoints.length >= 2) {
+              calculateRoute(newPoints);
+            } else {
+              setDirectionsResult(null);
+            }
+            
+            console.log(`↩️ Removed last point, ${newPoints.length} remaining`);
+            toast({ title: `Point ${String.fromCharCode(65 + directionsPoints.length - 1)} removed` });
+          }}
+        >
+          Undo
+        </Button>
+        
+        <Button
+          size="sm"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100 text-xs"
+          onClick={() => {
+            if (directionsPoints.length >= 2) {
+              calculateRoute(directionsPoints);
+              toast({ title: "Route recalculated" });
+            }
+          }}
+          disabled={directionsPoints.length < 2}
+        >
+          Route
+        </Button>
+      </div>
+    );
+  }, [directionsPoints, calculateRoute, toast]);
+
   // Setup click handler for mode switching - simplified to avoid infinite loops
   const setupClickHandler = useCallback(() => {
     if (!mapInstance || !selectedAreaBounds) {
@@ -361,6 +489,26 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         console.log('🗺️ mode: map ← reason=click-inside');
         setCurrentMode('map');
         localStorage.setItem('fieldMapCurrentMode', 'map');
+        
+        // Directions logic - only place points when in Map Mode and inside bounds
+        if (currentMode === 'map') {
+          const newPoint = {
+            lat: event.latLng.lat(),
+            lng: event.latLng.lng()
+          };
+          
+          setDirectionsPoints(prev => {
+            const newPoints = [...prev, newPoint];
+            console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
+            
+            // Auto-calculate route if we have 2+ points
+            if (newPoints.length >= 2) {
+              setTimeout(() => calculateRoute(newPoints), 100);
+            }
+            
+            return newPoints;
+          });
+        }
         
         // Auto-zoom and center on selected area when entering Map Mode
         setTimeout(() => {
@@ -394,7 +542,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     });
     
     console.log('✅ Click handler setup successful');
-  }, [mapInstance, selectedAreaBounds]);
+  }, [mapInstance, selectedAreaBounds, currentMode, calculateRoute]);
 
   // Memoized map options to prevent re-renders
   const mapOptions = useMemo(() => ({
@@ -570,6 +718,15 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       }, 1000);
     }
   }, [mapInstance]);
+
+  // Initialize DirectionsService when map is ready
+  useEffect(() => {
+    if (mapInstance && !directionsService) {
+      const service = new google.maps.DirectionsService();
+      setDirectionsService(service);
+      console.log('✅ DirectionsService initialized');
+    }
+  }, [mapInstance, directionsService]);
 
   // Initialize drawing manager when map is ready
   useEffect(() => {
@@ -1239,6 +1396,26 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
               }}
             />
           )}
+          
+          {/* Directions renderer - preserves viewport and suppresses default markers */}
+          {directionsResult && (
+            <DirectionsRenderer
+              directions={directionsResult}
+              options={{
+                preserveViewport: true,
+                suppressMarkers: true,
+                polylineOptions: {
+                  strokeColor: '#2196F3',
+                  strokeWeight: 4,
+                  strokeOpacity: 0.8,
+                  zIndex: 150
+                }
+              }}
+            />
+          )}
+          
+          {/* Custom direction markers with labels */}
+          {directionsPoints.length > 0 && renderDirectionsMarkers()}
         </GoogleMap>
         
         {/* Custom Zoom Controls - Always show for easy access */}
@@ -1302,6 +1479,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             🧭 Test Rotation
           </Button>
         </div>
+        
+        {/* Floating directions toolbar */}
+        <DirectionsToolbar />
       </div>
 
       {/* Mobile-friendly controls at bottom */}
