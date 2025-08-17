@@ -30,7 +30,15 @@
       "Bash(npm run build:*)",
       "WebSearch",
       "WebFetch(domain:developers.google.com)",
-      "Bash(ipconfig)"
+      "Bash(ipconfig)",
+      "Bash(git config:*)",
+      "Bash(gh repo sync:*)",
+      "WebFetch(domain:property-heatmap.vercel.app)",
+      "WebFetch(domain:property-heatmap-captains-projects-493e7ead.vercel.app)",
+      "WebFetch(domain:property-heatmap-9pbypb813-captains-projects-493e7ead.vercel.app)",
+      "WebFetch(domain:property-heatmap-7ytztrlb0-captains-projects-493e7ead.vercel.app)",
+      "Bash(move:*)",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

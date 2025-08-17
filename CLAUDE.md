@@ -121,7 +121,56 @@ npx supabase projects list             # List projects
 
 ## Recent Major Changes
 
-### ✅ Mode Engine & Performance Fixes (Latest - 2025-08-16)
+### ✅ Google Maps Rotation & Tilt Implementation (Latest - 2025-08-16 Extended)
+**MAJOR FEATURE: Complete Vector Map Rotation with 45° Tilt**
+
+#### **Vector Map Integration**
+- ✅ **Map ID Configured**: `3ea08160561a9368c8d75477` - Vector map with tilt and rotation enabled
+- ✅ **Google Cloud Console**: Verified Maps JavaScript API with rotation/tilt permissions
+- ✅ **Vector Rendering**: Replaced commented mapId with real Google-provided Map ID
+
+#### **45° Tilt Implementation** 
+- ✅ **Aerial Perspective**: Changed all `tilt: 0` to `tilt: 45` for aerial field view
+- ✅ **Safety Code Removal**: Removed all forced `setTilt(0)` calls throughout component
+- ✅ **Consistent Tilt**: 45° maintained across heading changes, resets, and rotations
+- ✅ **Device Detection**: Added tilt support detection with fallback logging
+
+#### **User Interaction Support**
+- ✅ **Mobile Gestures**: Two-finger rotation enabled via `gestureHandling: 'greedy'`
+- ✅ **Desktop Controls**: Right-click + drag rotation with 8px dead-zone
+- ✅ **Compass Visibility**: `rotateControl: true` shows compass when rotated
+- ✅ **Scale Control**: Distance measurements for field navigation
+
+#### **Programmatic Control Features**
+- ✅ **Test Rotation Button**: Always-visible button for testing `setHeading()` functionality  
+- ✅ **90° Increments**: Button rotates map by 90° each press with toast notifications
+- ✅ **State Persistence**: Heading saved to localStorage and restored on reload
+- ✅ **Debug Logging**: Comprehensive console output for tilt/rotation diagnostics
+
+#### **Network Access & LAN Configuration**
+- ✅ **Vite LAN Setup**: `host: true` binding to all network interfaces
+- ✅ **Cross-Device Testing**: Added `dev:lan` script for network access
+- ✅ **IP Detection**: Desktop LAN IP `192.168.50.91` identified and verified
+- ⚠️ **Network Isolation**: Chromebook wireless vs desktop Ethernet subnets
+
+#### **Development Challenges & Solutions**
+**Problem 1**: Map ID requirement for vector rendering
+- **Root Cause**: Rotation requires vector maps with specific Google Console setup
+- **Solution**: Applied Map ID `3ea08160561a9368c8d75477` with tilt/rotation enabled
+
+**Problem 2**: Forced flat view overriding tilt
+- **Root Cause**: Safety code forcing `setTilt(0)` throughout component
+- **Solution**: Systematic replacement with `setTilt(45)` across all functions
+
+**Problem 3**: Test button only visible after boundary drawing
+- **Root Cause**: Button conditional on `selectedAreaBounds` state
+- **Solution**: Made Test Rotation button always visible for immediate testing
+
+**Problem 4**: Network access for cross-device testing
+- **Root Cause**: Desktop on Ethernet, Chromebook on WiFi (different subnets)
+- **Solution**: Configured LAN server, pending network bridge or deployment
+
+### ✅ Mode Engine & Performance Fixes (2025-08-16)
 **CRITICAL FIXES: Click Handler Infinite Loops & Map Mode Constraints**
 
 #### **Mode Engine Stability**
@@ -258,6 +307,30 @@ npx supabase projects list             # List projects
 
 ## Known Issues & Solutions
 
+### ⚠️ PENDING: Cross-Device Network Access
+**Current Issue**: Chromebook wireless vs desktop Ethernet network isolation
+**Root Cause**: Different network subnets preventing LAN server access  
+**Attempted Solutions**:
+1. ✅ Configured Vite with `host: true` for all network interfaces
+2. ✅ Added `dev:lan` script with explicit `--host 0.0.0.0` binding
+3. ✅ Verified server accessibility on desktop LAN IP `192.168.50.91:8080`
+4. ❌ Git push timeout preventing Vercel deployment
+**Potential Solutions**:
+- Enable WiFi on desktop to bridge networks
+- Deploy via alternative method to Vercel for testing
+- Use mobile hotspot for same-network testing
+**Status**: ⚠️ LOCAL FEATURES COMPLETE, AWAITING NETWORK ACCESS
+
+### ❌ UNRESOLVED: Git Push & Deployment Issues
+**Current Issue**: `git push` commands timing out during deployment
+**Root Cause**: Credential manager or network connectivity preventing GitHub sync
+**Impact**: Latest rotation/tilt features not deployed to production
+**Attempted Solutions**:
+1. ❌ Standard `git push origin master` (timeout after 2 minutes)
+2. ❌ GitHub CLI `gh repo sync` (diverging changes error)
+3. ✅ Local commit successful with proper commit message
+**Status**: ❌ DEPLOYMENT BLOCKED
+
 ### ✅ RESOLVED: Google Maps API Issues  
 **Previous Issue**: "This page didn't load Google Maps correctly" error
 **Root Cause**: Maps JavaScript API not enabled in Google Cloud Console
@@ -266,6 +339,15 @@ npx supabase projects list             # List projects
 2. Added VITE_GOOGLE_MAPS_API_KEY to Vercel environment variables
 3. Implemented dual fallback system (Vercel → Supabase Edge Function)
 **Status**: ✅ FULLY RESOLVED
+
+### ✅ RESOLVED: Vector Map Rotation Requirements
+**Previous Issue**: Rotation and tilt not working despite `rotateControl: true`
+**Root Cause**: Missing Map ID for vector rendering capability
+**Solution Applied**:
+1. Obtained Map ID `3ea08160561a9368c8d75477` from Google Cloud Console
+2. Configured with tilt and rotation permissions enabled
+3. Replaced commented mapId with real vector map ID
+**Status**: ✅ FULLY FUNCTIONAL
 
 ### Issue: Supabase Connection
 **Solution**: App uses production Supabase instance. Local development connects to production database.
@@ -332,26 +414,40 @@ npx supabase projects list             # List projects
 - ✅ **Performance Monitoring**: Debug output for re-render prevention
 
 ---
-*Last Updated: 2025-08-16*  
-*Status: Field Navigator - Mode Engine & Performance Complete*  
-*Major Features: Stable Mode Switching, Map Constraints, Navigation Controls*  
-*Security: API Keys Properly Secured Across Multiple Systems*
+*Last Updated: 2025-08-16 Extended*  
+*Status: Field Navigator - Complete Rotation/Tilt System & Network Ready*  
+*Major Features: Google Maps Vector Rendering, 45° Aerial View, Cross-Device Setup*  
+*Pending: Chromebook Testing (Network Bridge or Production Deployment)*  
+*Security: API Keys & Map ID Properly Secured Across Multiple Systems*
 
 ## GPT Project Manager Notes
 *Messages for GPT project manager (manages this project and provides prompts)*
 
-### 2025-08-16 Session Complete ✅
+### 2025-08-16 Session Extended ✅
 **Major Accomplishments:**
 - ✅ **Critical Performance Fix**: Resolved white screen infinite loop bug in click handler
 - ✅ **Mode Engine Stability**: Simplified dependencies, direct state updates prevent conflicts
 - ✅ **Map Mode Constraints**: Auto-zoom with 15% padding, snap-to-center functionality
 - ✅ **Navigation Controls**: Added compass and scale controls with proper visibility
-- ✅ **Debug Infrastructure**: Enhanced logging for troubleshooting and monitoring
+- ✅ **Full Rotation/Tilt System**: Complete Google Maps vector rendering with Map ID `3ea08160561a9368c8d75477`
+- ✅ **45° Aerial View**: Systematic replacement of flat view with 45° tilt throughout component
+- ✅ **Cross-Device Testing Setup**: LAN server configuration with `dev:lan` script
+- ✅ **Programmatic Controls**: Test Rotation button with toast notifications and state persistence
 
-**Pending Tasks for Next Session:**
-1. Complete Google Console configuration for real rotation functionality
-2. Remove temporary 45° rotation simulation code
-3. Test full compass functionality with actual device rotation
-4. Consider implementing preset boundary templates for common field shapes
+**Challenges Encountered:**
+- ❌ **Git Push Timeout**: Unable to deploy latest features to Vercel production
+- ⚠️ **Network Isolation**: Chromebook wireless vs desktop Ethernet subnet separation
+- ✅ **Vector Map Requirements**: Successfully resolved with proper Map ID configuration
 
-**Technical Status**: Field Navigator mode engine is now stable and performant. Ready for field testing.
+**Technical Achievements:**
+- Complete rotation system: Two-finger gestures, right-click+drag, programmatic control
+- Device compatibility detection with graceful fallback logging
+- All safety code systematically updated for 45° tilt maintenance
+- Network infrastructure prepared for cross-device testing
+
+**Deployment Status**: 
+- ✅ Local implementation complete and fully functional
+- ❌ Production deployment blocked by git push issues  
+- ⚠️ Cross-device testing pending network bridge or alternative deployment
+
+**Ready for field testing once network access resolved or deployment completed.**
