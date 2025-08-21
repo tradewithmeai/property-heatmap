@@ -69,7 +69,7 @@ npm run preview      # Preview production build
 npm run lint         # Run ESLint
 ```
 
-### Deployment Workflow
+### ✅ Deployment Workflow
 1. Make changes locally and test on http://localhost:8084
 2. Commit and push to GitHub:
    ```bash
@@ -79,6 +79,13 @@ npm run lint         # Run ESLint
    ```
 3. Vercel automatically builds and deploys
 4. Production updates available immediately
+
+### ✅ Current Production Deployments
+- **Main Production**: https://property-heatmap.vercel.app
+- **Team Production**: https://property-heatmap-captains-projects-493e7ead.vercel.app  
+- **Latest Deployment**: https://property-heatmap-7ytztrlb0-captains-projects-493e7ead.vercel.app (2025-08-17)
+- **Previous Deployments**: property-heatmap-9pbypb813, property-heatmap-5khurfi3r, property-heatmap-4a5u77jka
+- **All Features Live**: Favicon support, directions implementation, rotation/tilt system all deployed
 
 ### Supabase CLI Commands
 ```bash
@@ -121,7 +128,81 @@ npx supabase projects list             # List projects
 
 ## Recent Major Changes
 
-### ✅ Google Maps Rotation & Tilt Implementation (Latest - 2025-08-16 Extended)
+### ✅ Lightweight Directions Implementation (Latest - 2025-08-17)
+**MAJOR FEATURE: Click-to-Route Navigation with Custom Semantics**
+
+#### **Feature Overview**
+- ✅ **Lightweight Directions**: Click-to-route system with A→B→C waypoint sequence
+- ✅ **Custom Click Semantics**: Points only accepted in Map Mode inside selected area bounds
+- ✅ **Seamless Integration**: Preserves all existing viewport, rotation, tilt, and mask constraints
+- ✅ **Field Navigation Focus**: Walking mode routes optimized for outdoor field use
+
+#### **Technical Implementation**
+- ✅ **'routes' Library**: Added to LIBRARIES array for DirectionsService support
+- ✅ **Service Integration**: DirectionsService, DirectionsRenderer, Marker components
+- ✅ **Enhanced Click Handler**: Modified existing setupClickHandler with directions logic
+- ✅ **Route Calculation**: Auto-calculation on 2+ points with waypoint preservation
+- ✅ **Custom Markers**: A-Z labeled markers with color coding (green→orange→red)
+
+#### **User Interface & Controls**
+- ✅ **Floating Toolbar**: Bottom-right mobile-friendly toolbar with Clear/Undo/Route
+- ✅ **Visual Feedback**: Toast notifications and console logging for user actions
+- ✅ **Responsive Design**: Touch-friendly buttons and proper z-index management
+- ✅ **State Management**: Points preserved across mode switches
+
+#### **Preserved Constraints (Critical)**
+- ✅ **No Viewport Changes**: `preserveViewport: true`, no auto-fit/zoom/pan from directions
+- ✅ **Mode Switching Intact**: Outside clicks still switch to Global Mode as before
+- ✅ **Rotation/Tilt Preserved**: No calls to `setHeading(0)` or `setTilt(0)` 
+- ✅ **Mask/Leash Unchanged**: All existing boundary systems work unchanged
+- ✅ **Route Over Mask**: Polyline renders naturally over mask with z-index 150
+
+#### **Click Sequence Logic**
+- ✅ **1st Click**: Origin point (A) with green marker
+- ✅ **2nd Click**: Destination point (B) with red marker + auto-route calculation
+- ✅ **3rd+ Clicks**: New destination (C, D...) with previous becoming waypoints
+- ✅ **Example Flow**: A,B → click C ⇒ route A → B(waypoint) → C(destination)
+
+#### **Development Challenges & Solutions**
+**Challenge 1**: Integrating directions without breaking existing click handler
+- **Solution**: Enhanced existing setupClickHandler instead of replacing it
+- **Result**: Seamless mode switching + directions placement in single handler
+
+**Challenge 2**: Preserving viewport constraints while showing routes
+- **Solution**: Used `preserveViewport: true` and `suppressMarkers: true`
+- **Result**: Routes display without disrupting rotation/tilt/leash systems
+
+**Challenge 3**: Custom markers with proper z-index management
+- **Solution**: Custom Marker components with calculated z-index and color coding
+- **Result**: Clear A-Z labels that don't interfere with existing UI elements
+
+### ✅ Versioned Snapshot & Release Management (2025-08-17)
+**MAJOR MILESTONE: Protected Release v0.1.0-beta.1 with Full Backup System**
+
+#### **Release Branch & Tag Protection**
+- ✅ **Protected Branch**: `release/v0.1.0-beta.1` frozen snapshot of pre-directions state
+- ✅ **Annotated Tag**: `v0.1.0-beta.1` with comprehensive release notes
+- ✅ **GitHub Integration**: Branch and tag successfully pushed to origin
+- ✅ **Version Management**: package.json updated to 0.1.0-beta.1 for release branch
+
+#### **Backup & Archive System**
+- ✅ **Repository Archive**: `backups/repo-v0.1.0-beta.1.tgz` (excludes node_modules, .git)
+- ✅ **Production Build**: `backups/build-v0.1.0-beta.1.tgz` (dist folder archive)
+- ✅ **GitHub Release**: Draft release created with artifacts attached
+- ✅ **Local Safety**: Complete snapshot preserved locally for rollback capability
+
+#### **Development Workflow Established**
+- ✅ **Active Branch**: master (ready for continued development)
+- ✅ **Protected Assets**: Release branch untouchable for future reference
+- ✅ **Snapshot Process**: Repeatable workflow for future version management
+- ✅ **CHANGELOG**: Created with initial beta entry and version tracking
+
+#### **Build Verification**
+- ✅ **Production Build**: Successfully built 595KB JS bundle + 59KB CSS
+- ✅ **Dependencies**: All routes/directions libraries properly included
+- ✅ **No Errors**: Clean compilation with only size optimization warnings
+
+### ✅ Google Maps Rotation & Tilt Implementation (2025-08-16 Extended)
 **MAJOR FEATURE: Complete Vector Map Rotation with 45° Tilt**
 
 #### **Vector Map Integration**
@@ -390,11 +471,21 @@ npx supabase projects list             # List projects
 - ✅ **Click Mode Toggle**: Inside boundary → Map Mode, outside → Global Mode
 - ✅ **Right-Click + Drag Rotation**: Smooth rotation with 8px dead-zone
 - ✅ **Mobile Touch Support**: Two-finger rotation and zoom gestures
+- ✅ **Click-to-Route Directions**: A→B→C waypoint sequence with auto-calculation
+- ✅ **Floating Directions Toolbar**: Clear/Undo/Route controls with mobile-friendly design
 
 ### **🎯 Map Modes**
 - ✅ **Global Mode**: Free worldwide navigation, green boundary visible, no mask
 - ✅ **Map Mode**: Soft leash constraint, outside area masked, unlimited zoom
 - ✅ **Reset View**: Center on area, north-up orientation, force Map Mode
+
+### **🧭 Directions & Navigation**
+- ✅ **Walking Route Calculation**: Google Maps DirectionsService with WALKING mode
+- ✅ **Custom Markers**: A-Z labels with color progression (green→orange→red)
+- ✅ **Waypoint Support**: Multi-point routes with automatic waypoint management
+- ✅ **Constraint Preservation**: Routes display without affecting viewport/rotation/tilt
+- ✅ **Toolbar Controls**: Clear all points, undo last point, toggle route visibility
+- ✅ **Click Semantics**: Route points only accepted in Map Mode inside bounds
 
 ### **⚙️ Technical Features**
 - ✅ **Unlimited Zoom**: Satellite level (1) to street detail (22) in both modes
@@ -414,40 +505,70 @@ npx supabase projects list             # List projects
 - ✅ **Performance Monitoring**: Debug output for re-render prevention
 
 ---
-*Last Updated: 2025-08-16 Extended*  
-*Status: Field Navigator - Complete Rotation/Tilt System & Network Ready*  
-*Major Features: Google Maps Vector Rendering, 45° Aerial View, Cross-Device Setup*  
-*Pending: Chromebook Testing (Network Bridge or Production Deployment)*  
+*Last Updated: 2025-08-21 Complete*  
+*Status: Field Navigator - Stable Production System with Complete Feature Set*  
+*Major Features: Click-to-Route Directions, Physical Map Mode, Rotation/Tilt, Comprehensive Favicon System*  
+*Production: All Features Deployed & Functional - Ready for New Version Snapshot*  
 *Security: API Keys & Map ID Properly Secured Across Multiple Systems*
 
 ## GPT Project Manager Notes
 *Messages for GPT project manager (manages this project and provides prompts)*
 
-### 2025-08-16 Session Extended ✅
+### 2025-08-21 Session Complete ✅
 **Major Accomplishments:**
-- ✅ **Critical Performance Fix**: Resolved white screen infinite loop bug in click handler
-- ✅ **Mode Engine Stability**: Simplified dependencies, direct state updates prevent conflicts
-- ✅ **Map Mode Constraints**: Auto-zoom with 15% padding, snap-to-center functionality
-- ✅ **Navigation Controls**: Added compass and scale controls with proper visibility
-- ✅ **Full Rotation/Tilt System**: Complete Google Maps vector rendering with Map ID `3ea08160561a9368c8d75477`
-- ✅ **45° Aerial View**: Systematic replacement of flat view with 45° tilt throughout component
-- ✅ **Cross-Device Testing Setup**: LAN server configuration with `dev:lan` script
-- ✅ **Programmatic Controls**: Test Rotation button with toast notifications and state persistence
+- ✅ **Codebase Analysis & Documentation**: Comprehensive review of existing directions implementation
+- ✅ **Status Verification**: Confirmed lightweight directions system already fully functional and deployed
+- ✅ **Feature Validation**: Verified A→B→C waypoint system, custom click semantics, and floating toolbar working perfectly
+- ✅ **Production Confirmation**: All features confirmed live at https://property-heatmap-7ytztrlb0-captains-projects-493e7ead.vercel.app
+- ✅ **Documentation Maintenance**: Updated project memory with latest session progress and findings
+- ✅ **Version Management Preparation**: Ready to create new versioned snapshot for current stable state
 
-**Challenges Encountered:**
-- ❌ **Git Push Timeout**: Unable to deploy latest features to Vercel production
-- ⚠️ **Network Isolation**: Chromebook wireless vs desktop Ethernet subnet separation
-- ✅ **Vector Map Requirements**: Successfully resolved with proper Map ID configuration
+**Analysis Findings:**
+- **Directions System**: Already implemented exactly as requested - no development needed
+- **Click-to-Route**: Working with proper A→B→C waypoint sequence and auto-calculation
+- **Custom Semantics**: Direction points only accepted in Map Mode inside boundary constraints
+- **UI Controls**: Floating toolbar with Clear/Undo/Route buttons fully functional
+- **Constraint Preservation**: All viewport, rotation, tilt, and mask systems intact
+
+**Technical Status:**
+- All existing functionality preserved and working
+- Production deployment successful and stable
+- No bugs or issues identified in current implementation
+- Ready for new versioned snapshot and backup creation
+
+### 2025-08-17 Session Complete ✅
+**Major Accomplishments:**
+- ✅ **Comprehensive Favicon System**: Complete icon support with 8 sizes, Apple touch icons, social media optimization
+- ✅ **Versioned Snapshot Management**: Protected release branch `v0.1.0-beta.1` with annotated tags and backup archives
+- ✅ **Lightweight Directions Implementation**: Click-to-route navigation with A→B→C waypoint sequence
+- ✅ **Seamless Integration**: Directions preserve all existing viewport, rotation, tilt, and mask constraints
+- ✅ **Production Deployment**: All features successfully deployed to https://property-heatmap-7ytztrlb0-captains-projects-493e7ead.vercel.app
+- ✅ **File Cleanup**: Removed unused files while preserving original property baseline codebase
+- ✅ **Documentation Update**: Comprehensive CLAUDE.md update with progress, fails, and fixes
+
+**Features Implemented:**
+- **Routes Library Integration**: Added 'routes' to LIBRARIES array for DirectionsService
+- **Custom Click Semantics**: Direction points only accepted in Map Mode inside bounds
+- **Floating Toolbar**: Mobile-friendly Clear/Undo/Route controls with proper z-index
+- **Custom Markers**: A-Z labeled markers with color progression (green→orange→red)
+- **Route Preservation**: All existing viewport constraints maintained with `preserveViewport: true`
 
 **Technical Achievements:**
-- Complete rotation system: Two-finger gestures, right-click+drag, programmatic control
-- Device compatibility detection with graceful fallback logging
-- All safety code systematically updated for 45° tilt maintenance
-- Network infrastructure prepared for cross-device testing
+- Enhanced existing click handler instead of replacing (seamless integration)
+- Version management with protected release branches and local backups
+- Complete favicon ecosystem with proper HTML integration
+- Successful build verification: 595KB JS + 59KB CSS with routes libraries
 
 **Deployment Status**: 
-- ✅ Local implementation complete and fully functional
-- ❌ Production deployment blocked by git push issues  
-- ⚠️ Cross-device testing pending network bridge or alternative deployment
+- ✅ All features deployed and functional in production
+- ✅ Favicon support across all devices and browsers
+- ✅ Directions system working with preserved constraints
+- ✅ Protected release branch for future rollback capability
 
-**Ready for field testing once network access resolved or deployment completed.**
+**Challenges Overcome:**
+- ✅ **NPM Install Issues**: Resolved EPERM errors with `--no-fund --no-audit` flags
+- ✅ **File Movement**: Used `mv` instead of `move` command for cross-platform compatibility
+- ✅ **Route Integration**: Preserved all existing UX while adding directions functionality
+- ✅ **Version Management**: Established comprehensive snapshot and backup workflow
+
+**Ready for field testing with complete directions navigation and all physical map constraints preserved.**
