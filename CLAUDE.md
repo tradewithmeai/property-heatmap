@@ -505,16 +505,16 @@ npx supabase projects list             # List projects
 - ✅ **Performance Monitoring**: Debug output for re-render prevention
 
 ---
-*Last Updated: 2025-08-21 Complete*  
-*Status: Field Navigator - Stable Production System with Complete Feature Set*  
-*Major Features: Click-to-Route Directions, Physical Map Mode, Rotation/Tilt, Comprehensive Favicon System*  
-*Production: All Features Deployed & Functional - Ready for New Version Snapshot*  
+*Last Updated: 2025-08-21 Extended - Critical Bug Fixed*  
+*Status: Field Navigator - Production System with Fully Functional Directions*  
+*Major Features: Click-to-Route Directions (FIXED), Physical Map Mode, Rotation/Tilt, Comprehensive Favicon System*  
+*Production: Needs Redeployment for Bug Fix - Local Development Fully Functional*  
 *Security: API Keys & Map ID Properly Secured Across Multiple Systems*
 
 ## GPT Project Manager Notes
 *Messages for GPT project manager (manages this project and provides prompts)*
 
-### 2025-08-21 Session Complete ✅
+### 2025-08-21 Session Extended ✅
 **Major Accomplishments:**
 - ✅ **Critical Bug Discovery & Fix**: Found and resolved state timing bug preventing route point creation
 - ✅ **Route Setting Functionality Restored**: Fixed click-to-route system that wasn't working in production
@@ -523,13 +523,54 @@ npx supabase projects list             # List projects
 - ✅ **Build Verification**: Successful compilation and testing of the fix
 - ✅ **Version Management**: Created v0.2.0-stable snapshot and comprehensive backups
 - ✅ **Documentation Updates**: Updated project memory and created comprehensive CHANGELOG
+- ✅ **Git Integration**: Successfully pushed all fixes and documentation to GitHub repository
+
+**Session Timeline & Activities:**
+
+**Part 1 - Initial Analysis (Continuation from previous conversation)**
+- Analyzed user request for lightweight directions implementation
+- Discovered directions system was already fully implemented in codebase
+- Verified all components present: DirectionsService, DirectionsRenderer, Marker, floating toolbar
+- Confirmed production deployment but identified functionality not working
+
+**Part 2 - Version Management & Documentation**
+- Created v0.2.0-stable annotated git tag with comprehensive release notes
+- Generated backup archives: `repo-v0.2.0-stable.tgz` and `build-v0.2.0-stable.tgz`
+- Created CHANGELOG.md with complete version history
+- Successfully pushed tag and documentation to GitHub
+- Build verification: 595KB JS + 59KB CSS bundle size
+
+**Part 3 - Critical Bug Discovery**
+- User reported: "I can't set a route" on production site
+- Investigated click handler logic and found state timing bug
+- **Bug Location**: Lines 494-495 in BoundedFieldMap.tsx
+- **Root Cause**: `if (currentMode === 'map')` checked old state before React update completed
+- **Impact**: Directions logic never executed, route points never created
+
+**Part 4 - Bug Fix Implementation**
+- **Solution Applied**: Removed redundant state check since mode is deterministic after click
+- **Code Change**: Moved directions logic outside conditional, directly after mode setting
+- **Testing**: Started dev server on localhost:8080, verified fix works
+- **Build Success**: Clean build with no compilation errors (8.52s build time)
 
 **Critical Bug Fixed:**
-- **Root Cause**: State timing issue in click handler (lines 494-495)
-- **Problem**: `if (currentMode === 'map')` checked old state before React update
-- **Solution**: Removed redundant check since we know we're setting mode to 'map'
-- **Impact**: Route points now create immediately when clicking inside boundary
-- **Result**: Complete user flow now functional from boundary setup to route calculation
+```typescript
+// BEFORE (Broken):
+if (clickedInside) {
+  setCurrentMode('map');
+  if (currentMode === 'map') { // ❌ Checks OLD state!
+    // Directions logic never runs
+  }
+}
+
+// AFTER (Fixed):
+if (clickedInside) {
+  setCurrentMode('map');
+  // Directions logic runs immediately ✅
+  const newPoint = { lat, lng };
+  setDirectionsPoints(prev => [...prev, newPoint]);
+}
+```
 
 **User Flow Now Working:**
 1. **Set Map Area** → Draw rectangle boundary ✅
@@ -537,11 +578,25 @@ npx supabase projects list             # List projects
 3. **Floating toolbar appears** → Clear/Undo/Route controls ✅
 4. **Routes calculate automatically** → Walking directions with waypoints ✅
 
+**Challenges & Solutions:**
+- **Challenge 1**: Directions feature implemented but non-functional in production
+  - **Solution**: Deep code analysis revealed state timing bug in click handler
+- **Challenge 2**: React state updates are asynchronous
+  - **Solution**: Used deterministic logic instead of checking state that hasn't updated yet
+- **Challenge 3**: Build size warning (597KB chunk)
+  - **Note**: Acceptable for now, can optimize with code splitting in future
+
 **Technical Status:**
 - Critical functionality bug resolved and tested
 - Production-ready with complete feature set working
 - Build successful with no compilation errors
+- Git repository fully updated with fixes and documentation
 - Ready for deployment with fully functional directions system
+
+**Deployment Requirements:**
+- Production site needs redeployment to include critical bug fix
+- Current live site has non-functional directions until updated
+- Local development confirmed working perfectly with fix applied
 
 ### 2025-08-17 Session Complete ✅
 **Major Accomplishments:**
