@@ -490,25 +490,23 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         setCurrentMode('map');
         localStorage.setItem('fieldMapCurrentMode', 'map');
         
-        // Directions logic - only place points when in Map Mode and inside bounds
-        if (currentMode === 'map') {
-          const newPoint = {
-            lat: event.latLng.lat(),
-            lng: event.latLng.lng()
-          };
+        // Directions logic - place points when clicking inside bounds (we're now in Map Mode)
+        const newPoint = {
+          lat: event.latLng.lat(),
+          lng: event.latLng.lng()
+        };
+        
+        setDirectionsPoints(prev => {
+          const newPoints = [...prev, newPoint];
+          console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
           
-          setDirectionsPoints(prev => {
-            const newPoints = [...prev, newPoint];
-            console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
-            
-            // Auto-calculate route if we have 2+ points
-            if (newPoints.length >= 2) {
-              setTimeout(() => calculateRoute(newPoints), 100);
-            }
-            
-            return newPoints;
-          });
-        }
+          // Auto-calculate route if we have 2+ points
+          if (newPoints.length >= 2) {
+            setTimeout(() => calculateRoute(newPoints), 100);
+          }
+          
+          return newPoints;
+        });
         
         // Auto-zoom and center on selected area when entering Map Mode
         setTimeout(() => {
