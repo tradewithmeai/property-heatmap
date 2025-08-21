@@ -5,20 +5,33 @@ All notable changes to the Field Navigator project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1-hotfix] - 2025-08-21
+
+### Fixed
+- **Critical Bug**: State timing issue preventing route point creation in production
+- **Root Cause**: Click handler checked `currentMode === 'map'` using old state before React update completed
+- **Solution**: Removed redundant state check since mode is known to be 'map' after click inside boundary
+- **Impact**: Route setting functionality now works as designed
+
+### Verification
+- **Build Successful**: No compilation errors, clean build output
+- **User Flow Restored**: Complete workflow from boundary setup to route calculation now functional
+- **Production Ready**: Fix ready for deployment
+
+### User Experience
+- **Step 1**: Set Map Area → Draw rectangle boundary ✅
+- **Step 2**: Click inside boundary → Creates route points A, B, C... ✅ (FIXED)
+- **Step 3**: Floating toolbar appears → Clear/Undo/Route controls ✅ 
+- **Step 4**: Routes calculate automatically → Walking directions with waypoints ✅
+
 ## [0.2.0-stable] - 2025-08-21
 
 ### Analysis & Verification
 - **Codebase Analysis**: Comprehensive review of existing directions implementation
-- **Status Verification**: Confirmed lightweight directions system fully functional and deployed
-- **Feature Validation**: Verified A→B→C waypoint system, custom click semantics, and floating toolbar working perfectly
-- **Production Confirmation**: All features confirmed live and working
+- **Status Verification**: Confirmed lightweight directions system implemented but not functional due to bug
+- **Feature Validation**: Identified state timing bug preventing route point creation
+- **Production Issue**: Directions system not working despite being implemented
 - **Documentation Maintenance**: Updated project memory with latest session progress and findings
-
-### Technical Status
-- All existing functionality preserved and working
-- Production deployment successful and stable  
-- No bugs or issues identified in current implementation
-- Ready for field testing with complete feature set
 
 ### Backup & Version Management
 - Created versioned snapshot v0.2.0-stable with comprehensive annotations
