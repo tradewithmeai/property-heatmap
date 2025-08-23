@@ -345,6 +345,13 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
 
   // Calculate route using DirectionsService with comprehensive error handling
   const calculateRoute = useCallback((points: google.maps.LatLngLiteral[]) => {
+    console.log('🚀 calculateRoute called', { 
+      points: points.length, 
+      hasDirectionsService: !!directionsService, 
+      currentDirectionsResult: !!directionsResult,
+      serviceReady: directionsService ? 'YES' : 'NO'
+    });
+    
     if (!directionsService || points.length < 2) {
       console.log('⚠️ calculateRoute skipped', { hasSvc: !!directionsService, len: points.length });
       return;
@@ -369,9 +376,15 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       console.log('🧭 Routing response', { status, hasResult: !!result, result });
       
       if (status === google.maps.DirectionsStatus.OK && result) {
+        console.log('🎉 Route calculation SUCCESS', { 
+          status, 
+          routeCount: result.routes?.length || 0,
+          legs: result.routes?.[0]?.legs?.length || 0,
+          pointsUsed: points.length 
+        });
         setDirectionsResult(result);
         setTotalDistanceMeters(computeTotalDistanceMeters(result));
-        console.log(`✅ Route set: ${points.length} points`);
+        console.log(`✅ Route set in state: ${points.length} points`);
       } else {
         // Surface common permission/quota/location issues
         switch (status) {
@@ -418,6 +431,10 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
 
   // Auto-update distance when directionsResult changes
   useEffect(() => {
+    console.log('📊 DirectionsResult changed in state', { 
+      hasResult: !!directionsResult, 
+      routes: directionsResult?.routes?.length || 0 
+    });
     setTotalDistanceMeters(computeTotalDistanceMeters(directionsResult));
   }, [directionsResult, computeTotalDistanceMeters]);
 
@@ -429,6 +446,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       return;
     }
 
+    setIsLocating(true);
     console.log('📍 Location: Starting watch');
     
     watchIdRef.current = navigator.geolocation.watchPosition(
@@ -445,6 +463,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       (error) => {
         const errorMsg = error.message || 'Location error';
         setGeoError(errorMsg);
+        setIsLocating(false);
         console.error('📍 Location error:', errorMsg);
         
         if (error.code === error.PERMISSION_DENIED) {
@@ -619,10 +638,14 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         setDirectionsPoints(prev => {
           const newPoints = [...prev, newPoint];
           console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
+          console.log('🗺️ Direction points state:', { previousLength: prev.length, newLength: newPoints.length, points: newPoints });
           
           // Auto-calculate route if we have 2+ points (using fresh points array)
           if (newPoints.length >= 2) {
+            console.log('🧭 Triggering route calculation', { pointCount: newPoints.length, hasDirectionsService: !!directionsService });
             calculateRoute(newPoints);
+          } else {
+            console.log('🧭 Route calculation skipped - need 2+ points', { currentCount: newPoints.length });
           }
           
           return newPoints;
@@ -839,10 +862,12 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
 
   // Initialize DirectionsService when map is ready
   useEffect(() => {
+    console.log('🔧 DirectionsService effect', { hasMap: !!mapInstance, hasService: !!directionsService });
     if (mapInstance && !directionsService) {
+      console.log('🚀 Creating new DirectionsService...');
       const service = new google.maps.DirectionsService();
       setDirectionsService(service);
-      console.log('✅ DirectionsService initialized');
+      console.log('✅ DirectionsService initialized and set to state');
     }
   }, [mapInstance, directionsService]);
 
