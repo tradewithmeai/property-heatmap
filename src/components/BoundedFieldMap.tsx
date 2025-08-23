@@ -73,6 +73,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const [directionsPoints, setDirectionsPoints] = useState<google.maps.LatLngLiteral[]>([]);
   const [directionsResult, setDirectionsResult] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
+  const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(null);
   
   // Legacy state for compatibility (will be phased out)
   const [boundedArea, setBoundedArea] = useState<BoundedArea | null>(null);
@@ -362,6 +363,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
       
       if (status === google.maps.DirectionsStatus.OK && result) {
         setDirectionsResult(result);
+        setTotalDistanceMeters(computeTotalDistanceMeters(result));
         console.log(`✅ Route set: ${points.length} points`);
       } else {
         // Surface common permission/quota/location issues
@@ -382,9 +384,35 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             console.error('❌ Directions error:', status);
         }
         setDirectionsResult(null);
+        setTotalDistanceMeters(null);
       }
     });
   }, [directionsService]);
+
+  // Helper functions for distance calculation and formatting
+  const computeTotalDistanceMeters = useCallback((result: google.maps.DirectionsResult | null) => {
+    if (!result || !result.routes?.[0]?.legs?.length) return null;
+    const legs = result.routes[0].legs;
+    let total = 0;
+    for (const leg of legs) {
+      if (leg.distance?.value != null) total += leg.distance.value; // meters
+    }
+    return total || null;
+  }, []);
+
+  const formatDistance = useCallback((meters: number | null) => {
+    if (meters == null) return '';
+    const km = meters / 1000;
+    const miles = meters / 1609.344;
+    const kmStr = km >= 10 ? km.toFixed(1) : km.toFixed(2);
+    const miStr = miles >= 10 ? miles.toFixed(1) : miles.toFixed(2);
+    return `${kmStr} km (${miStr} mi)`;
+  }, []);
+
+  // Auto-update distance when directionsResult changes
+  useEffect(() => {
+    setTotalDistanceMeters(computeTotalDistanceMeters(directionsResult));
+  }, [directionsResult, computeTotalDistanceMeters]);
 
   // Render custom direction markers with labels
   const renderDirectionsMarkers = useCallback(() => {
@@ -427,6 +455,13 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     
     return (
       <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-20">
+        {/* Distance display chip */}
+        {totalDistanceMeters != null && (
+          <div className="shadow-lg bg-white/95 backdrop-blur px-3 py-2 rounded-xl text-sm font-medium text-gray-800 border border-gray-200">
+            Total distance: {formatDistance(totalDistanceMeters)}
+          </div>
+        )}
+        
         <Button
           size="sm"
           variant="secondary"
@@ -434,6 +469,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           onClick={() => {
             setDirectionsPoints([]);
             setDirectionsResult(null);
+            setTotalDistanceMeters(null);
             console.log('🧹 Cleared all direction points');
             toast({ title: "Directions cleared" });
           }}
@@ -455,6 +491,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
               calculateRoute(newPoints);
             } else {
               setDirectionsResult(null);
+              setTotalDistanceMeters(null);
             }
             
             console.log(`↩️ Removed last point, ${newPoints.length} remaining`);
@@ -480,7 +517,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         </Button>
       </div>
     );
-  }, [directionsPoints, calculateRoute, toast]);
+  }, [directionsPoints, calculateRoute, toast, totalDistanceMeters, formatDistance]);
 
   // Setup click handler for mode switching - simplified to avoid infinite loops
   const setupClickHandler = useCallback(() => {
