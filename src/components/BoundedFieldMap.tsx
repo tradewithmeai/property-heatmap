@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
 import { Plus, Minus, RotateCw, Maximize2 } from 'lucide-react';
 
-// Static libraries array to prevent LoadScript warning
+// Static libraries array to prevent LoadScript warning - Routes API enabled
 const LIBRARIES = ['drawing', 'geometry', 'routes'] as const;
 
 const containerStyle = {
