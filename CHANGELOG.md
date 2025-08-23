@@ -5,6 +5,41 @@ All notable changes to the Field Navigator project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0-stable] - 2025-08-23
+
+### Added
+- **Total Route Distance Display**: Auto-updating distance display showing total route length
+- **Distance Calculation**: Sums all route legs for accurate total distance measurement
+- **Metric + Imperial Display**: Shows both kilometers and miles (e.g., "2.35 km (1.46 mi)")
+- **Distance Chip UI**: Non-intrusive chip in DirectionsToolbar showing total distance
+- **Auto-Update Logic**: Distance automatically recalculates when route changes
+
+### Enhanced
+- **Robust Directions Rendering**: Comprehensive error handling for all Google Maps DirectionsStatus cases
+- **Fresh Points Array Logic**: Removed setTimeout delays, uses immediate fresh array for routing
+- **Higher Z-Index**: DirectionsRenderer polyline now renders at z-index 1000 above all overlays
+- **Enhanced Diagnostics**: HUD now shows directions state (✅ drawn, ❌ no result, —)
+- **Environment Logging**: Added Google Maps libraries verification for troubleshooting
+
+### Technical Improvements
+- **State Management**: Added totalDistanceMeters state with proper lifecycle management
+- **Helper Functions**: computeTotalDistanceMeters and formatDistance for distance handling
+- **Error Handling**: Comprehensive DirectionsStatus error messages (REQUEST_DENIED, OVER_QUERY_LIMIT, etc.)
+- **Build Optimization**: Clean compilation 599KB JS + 60KB CSS bundle
+- **Memory Management**: Proper distance state reset in Clear/Undo operations
+
+### User Experience
+- **Complete Workflow**: Set Area → Click A → Click B (route + distance) → Click C (updated route + distance)
+- **Visual Feedback**: Distance appears only when route is rendered, disappears when cleared
+- **Consistent UI**: Distance chip integrates seamlessly with existing DirectionsToolbar
+- **Mobile Ready**: Touch-friendly design with responsive distance display
+
+### Production Ready
+- **All Constraints Preserved**: No changes to viewport, rotation, tilt, mask, leash, or mode systems
+- **Non-Intrusive**: Distance display doesn't interfere with existing functionality
+- **Comprehensive Testing**: A→B, A→B→C, Clear, Undo, and error scenarios all working
+- **Development Server**: Fully functional on localhost:8080
+
 ## [0.2.1-hotfix] - 2025-08-21
 
 ### Fixed
