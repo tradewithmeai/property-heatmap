@@ -1542,7 +1542,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
                   strokeColor: '#2196F3',
                   strokeWeight: 4,
                   strokeOpacity: 0.9,
-                  zIndex: 1000
+                  zIndex: 1200 // Above all markers including location marker
                 }
               }}
             />
