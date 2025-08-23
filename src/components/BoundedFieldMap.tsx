@@ -335,29 +335,53 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     return extendedBounds;
   }, []);
 
-  // Calculate route using DirectionsService
+  // Calculate route using DirectionsService with comprehensive error handling
   const calculateRoute = useCallback((points: google.maps.LatLngLiteral[]) => {
-    if (!directionsService || points.length < 2) return;
-    
+    if (!directionsService || points.length < 2) {
+      console.log('⚠️ calculateRoute skipped', { hasSvc: !!directionsService, len: points.length });
+      return;
+    }
+
     const origin = points[0];
     const destination = points[points.length - 1];
-    const waypoints = points.slice(1, -1).map(point => ({
-      location: point,
-      stopover: true
-    }));
-    
-    directionsService.route({
+    const waypoints = points.slice(1, -1).map(p => ({ location: p, stopover: true }));
+
+    console.log('🗺️ Routing request', { origin, destination, waypointsCount: waypoints.length });
+
+    const req: google.maps.DirectionsRequest = {
       origin,
       destination,
       waypoints,
+      optimizeWaypoints: false,
       travelMode: google.maps.TravelMode.WALKING,
-      optimizeWaypoints: false
-    }, (result, status) => {
-      if (status === 'OK' && result) {
+      provideRouteAlternatives: false,
+    };
+
+    directionsService.route(req, (result, status) => {
+      console.log('🧭 Routing response', { status, hasResult: !!result, result });
+      
+      if (status === google.maps.DirectionsStatus.OK && result) {
         setDirectionsResult(result);
-        console.log(`🗺️ Route calculated: ${points.length} points`);
+        console.log(`✅ Route set: ${points.length} points`);
       } else {
-        console.error('❌ Route calculation failed:', status);
+        // Surface common permission/quota/location issues
+        switch (status) {
+          case google.maps.DirectionsStatus.ZERO_RESULTS:
+            console.warn('❌ No route between selected points.');
+            break;
+          case google.maps.DirectionsStatus.OVER_QUERY_LIMIT:
+            console.warn('❌ Over query limit. Consider slower test clicking.');
+            break;
+          case google.maps.DirectionsStatus.REQUEST_DENIED:
+            console.error('❌ Request denied. Check API key restrictions and that Maps JavaScript API is enabled. If still denied, enable "Directions API" (Routes).');
+            break;
+          case google.maps.DirectionsStatus.INVALID_REQUEST:
+            console.error('❌ Invalid request. Check origin/destination formatting.');
+            break;
+          default:
+            console.error('❌ Directions error:', status);
+        }
+        setDirectionsResult(null);
       }
     });
   }, [directionsService]);
@@ -500,9 +524,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           const newPoints = [...prev, newPoint];
           console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
           
-          // Auto-calculate route if we have 2+ points
+          // Auto-calculate route if we have 2+ points (using fresh points array)
           if (newPoints.length >= 2) {
-            setTimeout(() => calculateRoute(newPoints), 100);
+            calculateRoute(newPoints);
           }
           
           return newPoints;
@@ -1154,6 +1178,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     // Click handler now managed separately via setupClickHandler useEffect
     // No restrictions applied here - leash system handles Map Mode constraints
     console.log('✅ Map loaded with unrestricted navigation - leash system will handle Map Mode constraints');
+    
+    // Log Google Maps environment for diagnostics
+    console.log('🔧 Libraries loaded:', (window as any).google?.maps?.libraries);
   }, [currentHeading, selectedAreaBounds, currentMode, viewableBounds, switchToMapMode, switchToGlobalMode]);
 
   // Setup right-click + drag rotation handlers
@@ -1285,6 +1312,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         <div>Context: {contextFrame && selectedAreaBounds ? `+${Math.round(((contextFrame.north - selectedAreaBounds.north) / (selectedAreaBounds.north - selectedAreaBounds.south)) * 100)}%` : 'OFF'}</div>
         <div>Debug: {debugPolylines ? '🔴 GREEN=Outer, RED=Context' : '⚫ OFF'}</div>
         <div>Leash: {currentMode === 'map' ? '✅ ON' : '❌ OFF'} {currentMode === 'map' ? `(${Math.round(leashRadiusMeters)}m)` : ''}</div>
+        <div>Directions: {directionsResult ? '✅ drawn' : (directionsPoints.length >= 2 ? '❌ no result' : '—')}</div>
       </div>
       
       {/* Map Container */}
@@ -1405,8 +1433,8 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
                 polylineOptions: {
                   strokeColor: '#2196F3',
                   strokeWeight: 4,
-                  strokeOpacity: 0.8,
-                  zIndex: 150
+                  strokeOpacity: 0.9,
+                  zIndex: 1000
                 }
               }}
             />
