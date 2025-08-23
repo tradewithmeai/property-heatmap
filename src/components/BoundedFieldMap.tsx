@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, useJsApiLoader, Rectangle, Polygon, Polyline, DirectionsService, DirectionsRenderer, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Rectangle, Polygon, Polyline, DirectionsService, DirectionsRenderer, Marker, Circle } from '@react-google-maps/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -74,6 +74,13 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const [directionsResult, setDirectionsResult] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(null);
+  
+  // User location state
+  const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
+  const [userAccuracy, setUserAccuracy] = useState<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   
   // Legacy state for compatibility (will be phased out)
   const [boundedArea, setBoundedArea] = useState<BoundedArea | null>(null);
@@ -413,6 +420,58 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   useEffect(() => {
     setTotalDistanceMeters(computeTotalDistanceMeters(directionsResult));
   }, [directionsResult, computeTotalDistanceMeters]);
+
+  // Start watching user location
+  const startLocationWatch = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      setGeoError('Geolocation not supported');
+      toast({ title: "Location Error", description: "Geolocation not supported by browser" });
+      return;
+    }
+
+    console.log('📍 Location: Starting watch');
+    
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setUserLocation(newLocation);
+        setUserAccuracy(position.coords.accuracy ?? null);
+        setGeoError(null);
+        console.log(`📍 Location updated: ${newLocation.lat.toFixed(6)}, ${newLocation.lng.toFixed(6)}, ±${Math.round(position.coords.accuracy)}m`);
+      },
+      (error) => {
+        const errorMsg = error.message || 'Location error';
+        setGeoError(errorMsg);
+        console.error('📍 Location error:', errorMsg);
+        
+        if (error.code === error.PERMISSION_DENIED) {
+          toast({ title: "Location Permission Denied", description: "Please enable location in browser settings" });
+        } else if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+          toast({ title: "HTTPS Required", description: "Location requires HTTPS or localhost" });
+        } else {
+          toast({ title: "Location Error", description: errorMsg });
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 20000
+      }
+    );
+  }, [toast]);
+
+  // Stop watching user location
+  const stopLocationWatch = useCallback(() => {
+    if (watchIdRef.current != null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+      console.log('📍 Location: Stopped watch');
+    }
+    setIsLocating(false);
+  }, []);
 
   // Render custom direction markers with labels
   const renderDirectionsMarkers = useCallback(() => {
@@ -1324,6 +1383,17 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     };
   }, []);
 
+  // Cleanup location watch on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+        console.log('🧹 Location: Cleanup watch on unmount');
+      }
+    };
+  }, []);
+
   if (loadError) {
     return (
       <div className="flex flex-col justify-center items-center h-96 p-4">
@@ -1350,6 +1420,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         <div>Debug: {debugPolylines ? '🔴 GREEN=Outer, RED=Context' : '⚫ OFF'}</div>
         <div>Leash: {currentMode === 'map' ? '✅ ON' : '❌ OFF'} {currentMode === 'map' ? `(${Math.round(leashRadiusMeters)}m)` : ''}</div>
         <div>Directions: {directionsResult ? '✅ drawn' : (directionsPoints.length >= 2 ? '❌ no result' : '—')}</div>
+        <div>Location: {isLocating ? '🟡 tracking' : userLocation ? `✅ ${Math.round(userAccuracy || 0)}m` : geoError ? '❌ error' : '⚫ off'}</div>
       </div>
       
       {/* Map Container */}
@@ -1479,6 +1550,43 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           
           {/* Custom direction markers with labels */}
           {directionsPoints.length > 0 && renderDirectionsMarkers()}
+          
+          {/* User location marker and accuracy circle */}
+          {userLocation && (
+            <>
+              {/* Accuracy circle - render first so it's behind the marker */}
+              {userAccuracy && (
+                <Circle
+                  center={userLocation}
+                  radius={userAccuracy}
+                  options={{
+                    fillColor: '#2196F3',
+                    fillOpacity: 0.1,
+                    strokeColor: '#2196F3',
+                    strokeOpacity: 0.4,
+                    strokeWeight: 2,
+                    clickable: false,
+                    zIndex: 50 // Below markers but above mask
+                  }}
+                />
+              )}
+              
+              {/* User location marker */}
+              <Marker
+                position={userLocation}
+                icon={{
+                  path: google.maps.SymbolPath.CIRCLE,
+                  fillColor: '#2196F3',
+                  fillOpacity: 1,
+                  strokeColor: 'white',
+                  strokeWeight: 3,
+                  scale: 8
+                }}
+                zIndex={1100} // Above other markers
+                title={`Your location (±${userAccuracy ? Math.round(userAccuracy) : '?'}m)`}
+              />
+            </>
+          )}
         </GoogleMap>
         
         {/* Custom Zoom Controls - Always show for easy access */}
@@ -1543,6 +1651,33 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           </Button>
         </div>
         
+        {/* Location button - separate from DirectionsToolbar */}
+        <div className="absolute bottom-36 right-4 z-20">
+          <Button
+            onClick={() => {
+              if (isLocating) {
+                stopLocationWatch();
+              } else {
+                startLocationWatch();
+              }
+            }}
+            variant={isLocating ? "destructive" : "default"}
+            size="sm"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium shadow-lg"
+          >
+            {isLocating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Stop
+              </>
+            ) : (
+              <>
+                📍 Locate me
+              </>
+            )}
+          </Button>
+        </div>
+
         {/* Floating directions toolbar */}
         <DirectionsToolbar />
       </div>
