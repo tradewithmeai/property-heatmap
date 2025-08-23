@@ -361,7 +361,14 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     const destination = points[points.length - 1];
     const waypoints = points.slice(1, -1).map(p => ({ location: p, stopover: true }));
 
-    console.log('🗺️ Routing request', { origin, destination, waypointsCount: waypoints.length });
+    // Enhanced logging for waypoint progression debugging
+    console.log('🗺️ Routing request details:', {
+      totalPoints: points.length,
+      origin: `${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`,
+      destination: `${destination.lat.toFixed(4)}, ${destination.lng.toFixed(4)}`,
+      waypoints: waypoints.map((w, i) => `${w.location.lat.toFixed(4)}, ${w.location.lng.toFixed(4)}`),
+      waypointsCount: waypoints.length
+    });
 
     const req: google.maps.DirectionsRequest = {
       origin,
@@ -637,8 +644,24 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         
         setDirectionsPoints(prev => {
           const newPoints = [...prev, newPoint];
-          console.log(`📍 Added direction point ${String.fromCharCode(65 + prev.length)} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
-          console.log('🗺️ Direction points state:', { previousLength: prev.length, newLength: newPoints.length, points: newPoints });
+          const pointLabel = String.fromCharCode(65 + prev.length);
+          console.log(`📍 Added direction point ${pointLabel} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
+          
+          // Enhanced progression logging
+          if (newPoints.length === 1) {
+            console.log('🎯 Origin set:', pointLabel);
+          } else if (newPoints.length === 2) {
+            console.log('🏁 Destination set:', pointLabel, '(Route A→B)');
+          } else {
+            const prevDest = String.fromCharCode(65 + prev.length - 2);
+            console.log(`🏁 New destination: ${pointLabel} (${prevDest} becomes waypoint)`);
+          }
+          
+          console.log('🗺️ Direction points state:', { 
+            previousLength: prev.length, 
+            newLength: newPoints.length, 
+            sequence: newPoints.map((_, i) => String.fromCharCode(65 + i)).join('→')
+          });
           
           // Auto-calculate route if we have 2+ points (using fresh points array)
           if (newPoints.length >= 2) {
