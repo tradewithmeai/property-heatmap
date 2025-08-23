@@ -74,6 +74,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const [directionsResult, setDirectionsResult] = useState<google.maps.DirectionsResult | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   const [totalDistanceMeters, setTotalDistanceMeters] = useState<number | null>(null);
+  const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   
   // User location state
   const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
@@ -538,6 +539,25 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
   const DirectionsToolbar = useCallback(() => {
     if (directionsPoints.length === 0) return null;
     
+    // Show collapsed Menu button when toolbar is hidden
+    if (!isToolbarVisible) {
+      return (
+        <div className="absolute bottom-20 right-4 z-20">
+          <Button
+            size="sm"
+            variant="default"
+            className="shadow-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium"
+            onClick={() => {
+              setIsToolbarVisible(true);
+              console.log('👁️ Directions toolbar shown');
+            }}
+          >
+            Menu ⬆️
+          </Button>
+        </div>
+      );
+    }
+    
     return (
       <div className="absolute bottom-20 right-4 flex flex-col gap-2 z-20">
         {/* Distance display chip */}
@@ -555,6 +575,7 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
             setDirectionsPoints([]);
             setDirectionsResult(null);
             setTotalDistanceMeters(null);
+            setIsToolbarVisible(true); // Reset toolbar visibility when clearing
             console.log('🧹 Cleared all direction points');
             toast({ title: "Directions cleared" });
           }}
@@ -600,9 +621,22 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         >
           Route
         </Button>
+        
+        <Button
+          size="sm"
+          variant="secondary"
+          className="shadow-lg bg-white hover:bg-gray-100 text-xs"
+          onClick={() => {
+            setIsToolbarVisible(false);
+            console.log('👁️ Directions toolbar hidden');
+            toast({ title: "Menu hidden - click Menu button to show" });
+          }}
+        >
+          Hide ⬇️
+        </Button>
       </div>
     );
-  }, [directionsPoints, calculateRoute, toast, totalDistanceMeters, formatDistance]);
+  }, [directionsPoints, calculateRoute, toast, totalDistanceMeters, formatDistance, isToolbarVisible, setIsToolbarVisible]);
 
   // Setup click handler for mode switching - simplified to avoid infinite loops
   const setupClickHandler = useCallback(() => {
@@ -646,6 +680,9 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
           const newPoints = [...prev, newPoint];
           const pointLabel = String.fromCharCode(65 + prev.length);
           console.log(`📍 Added direction point ${pointLabel} at ${newPoint.lat.toFixed(4)}, ${newPoint.lng.toFixed(4)}`);
+          
+          // Show toolbar when new points are added so user can see the menu
+          setIsToolbarVisible(true);
           
           // Enhanced progression logging
           if (newPoints.length === 1) {
