@@ -455,10 +455,16 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
     }
 
     setIsLocating(true);
-    console.log('📍 Location: Starting watch');
+    console.log('📍 Location: Starting watch...');
+    console.log('📍 Location: Navigator available:', 'geolocation' in navigator);
+    console.log('📍 Location: Protocol:', window.location.protocol);
+    console.log('📍 Location: Hostname:', window.location.hostname);
+    
+    console.log('📍 Location: Calling watchPosition...');
     
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        console.log('📍 Location: SUCCESS callback triggered');
         const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
@@ -469,10 +475,13 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         console.log(`📍 Location updated: ${newLocation.lat.toFixed(6)}, ${newLocation.lng.toFixed(6)}, ±${Math.round(position.coords.accuracy)}m`);
       },
       (error) => {
+        console.log('📍 Location: ERROR callback triggered');
         const errorMsg = error.message || 'Location error';
         setGeoError(errorMsg);
         setIsLocating(false);
         console.error('📍 Location error:', errorMsg);
+        console.error('📍 Location error code:', error.code);
+        console.error('📍 Location error details:', error);
         
         if (error.code === error.PERMISSION_DENIED) {
           toast({ title: "Location Permission Denied", description: "Please enable location in browser settings" });
@@ -488,6 +497,14 @@ function BoundedFieldMapComponent({ apiKey }: BoundedFieldMapProps) {
         timeout: 20000
       }
     );
+    
+    console.log('📍 Location: watchPosition called, ID:', watchIdRef.current);
+    
+    // Add timeout check to detect hanging
+    const hangCheckTimeout = setTimeout(() => {
+      console.warn('📍 Location: 30 seconds elapsed - checking if location request is hanging');
+      console.warn('📍 Location: Watch ID still active:', watchIdRef.current);
+    }, 30000);
   }, [toast]);
 
   // Stop watching user location
